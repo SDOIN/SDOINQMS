@@ -1,0 +1,12 @@
+# Jekyll configuration for clean URLs
+permalink: pretty
+
+# Optional: Add site metadata
+title: SDOIN Queueing Management System
+description: Schools Division of Ilocos Norte Queueing Management System
+
+# Exclude files from processing
+exclude:
+  - README.md
+  - .git
+  - .gitignore

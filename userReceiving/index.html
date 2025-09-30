@@ -3,21 +3,17 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SDOIN Queueing Management System - Releasing Station</title>
-  <link rel="stylesheet" href="styles.css" />
-  <script defer src="script.js"></script>
+  <title>SDOIN Queueing Management System</title>
+  <link rel="stylesheet" href="../styles.css" />
+  <script defer src="../script.js"></script>
   <script>
     function submitQueue(event) {
       event.preventDefault();
       const queueNumber = document.getElementById('queueNumber').value;
-      const dtsNumber = (document.getElementById('dtsNumber') && document.getElementById('dtsNumber').value.trim()) || '';
-      if (!dtsNumber) {
-        alert('DTS Number is required.');
-        return;
-      }
+      const dtsNumber = (document.getElementById('dtsNumber') && document.getElementById('dtsNumber').value) || '';
       // Append to persistent queue list
       try {
-        const list = JSON.parse(localStorage.getItem('releasing_queue') || '[]');
+        const list = JSON.parse(localStorage.getItem('receiving_queue') || '[]');
         const existsActive = list.some(it => it.number === String(queueNumber) && it.status !== 'done');
         if (existsActive) {
           alert('This queue number is already pending/processing. Please mark it done first.');
@@ -31,8 +27,8 @@
           createdAt: Date.now()
         };
         list.push(item);
-        localStorage.setItem('releasing_queue', JSON.stringify(list));
-        localStorage.setItem('releasing_last_update', String(Date.now()));
+        localStorage.setItem('receiving_queue', JSON.stringify(list));
+        localStorage.setItem('receiving_last_update', String(Date.now()));
       } catch (e) {}
       
       // Show modal with queue number
@@ -120,7 +116,7 @@
 <body>
   <!-- Top Bar -->
   <header class="top-bar">
-        <div class="system-title"><a href="index.html" style="color: inherit; text-decoration: none;">SDOIN Queueing Management System</a></div>
+        <div class="system-title"><a href="../" style="color: inherit; text-decoration: none;">SDOIN Queueing Management System</a></div>
     <div class="datetime" id="datetime">Loading...</div>
   </header>
 
@@ -131,9 +127,9 @@
       <!-- Title and Logos -->
       <div class="title-logos-section">
         <div class="logos">
-          <img src="images/SDOINLogo.png" alt="SDOIN Logo" class="logo-image" />
-          <img src="images/DEPEDLogo.png" alt="DepED Logo" class="logo-image" />
-          <img src="images/BagongPilipinasLogo.png" alt="Bagong Pilipinas Logo" class="logo-image bagong-pilipinas-logo" />
+          <img src="../images/SDOINLogo.png" alt="SDOIN Logo" class="logo-image" />
+          <img src="../images/DEPEDLogo.png" alt="DepED Logo" class="logo-image" />
+          <img src="../images/BagongPilipinasLogo.png" alt="Bagong Pilipinas Logo" class="logo-image bagong-pilipinas-logo" />
         </div>
         <div class="main-title">
           <h1>Schools Division of Ilocos Norte</h1>
@@ -149,7 +145,7 @@
             <div class="step-visual">
               <div class="card-icon">
                 <div class="card-number">00</div>
-                <div class="card-label">RELEASING STATION</div>
+                <div class="card-label">RECEIVING STATION</div>
               </div>
             </div>
             <div class="step-title">GET A QUEUEING NUMBER CARD</div>
@@ -171,7 +167,7 @@
             <div class="step-visual">
               <div class="screen-icon">
                 <div class="screen-number">00</div>
-                <div class="screen-label">RELEASING STATION</div>
+                <div class="screen-label">RECEIVING STATION</div>
               </div>
             </div>
             <div class="step-title">WAIT FOR YOUR QUEUEING NUMBER ON THE SCREEN</div>
@@ -181,15 +177,15 @@
 
       <!-- Buttons -->
       <div class="station-buttons">
-        <button class="station-btn receiving" onclick="window.location.href='userReceiving.html'">RECEIVING STATION</button>
-        <button class="station-btn releasing active" onclick="window.location.href='userReleasing.html'">RELEASING STATION</button>
+        <button class="station-btn receiving active" onclick="window.location.href='../userReceiving/'">RECEIVING STATION</button>
+        <button class="station-btn releasing" onclick="window.location.href='../userReleasing/'">RELEASING STATION</button>
       </div>
     </section>
 
     <!-- Right Section -->
     <aside class="right-section">
       <div class="form-panel" style="text-align: center;">
-        <h1>RELEASING STATION</h1>
+        <h1>RECEIVING STATION</h1>
         <p class="form-instruction">
           Kindly fill out the following fields below.<br />
           Please disregard the DTS Number if none.
@@ -198,12 +194,12 @@
         <form class="queue-form" id="queueForm" onsubmit="submitQueue(event)">
           <div class="form-group">
             <label for="queueNumber">QUEUEING NUMBER</label>
-            <input type="text" id="queueNumber" placeholder="Enter Your Queue number" required pattern="[0-9]+" title="Please enter numbers only" />
+            <input type="text" id="queueNumber" placeholder="Enter Your Queue Number" required pattern="[0-9]+" title="Please enter numbers only" />
           </div>
 
           <div class="form-group">
-            <label for="dtsNumber">DTS NUMBER *</label>
-            <input type="text" id="dtsNumber" placeholder="Enter Your DTS Number" required />
+            <label for="dtsNumber">DTS NUMBER (Leave blank if none)</label>
+            <input type="text" id="dtsNumber" placeholder="Enter Your DTS Number" />
           </div>
 
           <button type="submit" class="add-to-queue-btn">ADD TO QUEUE</button>
@@ -242,7 +238,7 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <p>Made with ❤️ and ☕ </p>
+    <p>Made with 💛 and ☕ </p>
   </footer>
 </body>
 </html>
