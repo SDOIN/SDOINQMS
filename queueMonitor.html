@@ -1,0 +1,445 @@
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>SDOIN Queueing Management System - Public Display</title>
+    <link rel="stylesheet" href="styles.css" />
+    <script defer src="script.js"></script>
+    <style>
+        * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        }
+
+        body {
+        font-family: 'Arial', sans-serif;
+        background: linear-gradient(rgba(0, 0, 0, 0.781), rgba(0, 0, 0, 0.781)), url('images/SDOINBackground.jpg');
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
+        min-height: 100vh;
+        color: white;
+        }
+
+        .queue-monitor-container {
+        display: flex;
+        height: 100vh;
+        padding: 20px;
+        gap: 20px;
+        }
+
+        .station-section {
+        flex: 1;
+        background: rgba(44, 44, 44, 0.9);
+        border-radius: 15px;
+        padding: 20px;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        }
+
+        .station-title {
+        font-size: 32px;
+        font-weight: bold;
+        text-align: center;
+        margin-bottom: 30px;
+        text-transform: uppercase;
+        letter-spacing: 2px;
+        }
+
+        .completed-numbers {
+        flex: 1;
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(60px, 1fr));
+        gap: 8px;
+        margin-bottom: 30px;
+        max-height: 70%;
+        overflow-y: auto;
+        padding: 10px;
+        }
+
+        .completed-number {
+        background: #495057;
+        border-radius: 8px;
+        padding: 12px;
+        text-align: center;
+        font-size: 18px;
+        font-weight: bold;
+        color: white;
+        border: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+        min-width: 50px;
+        min-height: 50px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        }
+
+        .completed-number:hover {
+        transform: scale(1.05);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+        }
+
+        .completed-number.current {
+        background: rgba(40, 167, 69, 0.3);
+        color: #4CAF50;
+        border-color: #4CAF50;
+        transform: scale(1.05);
+        }
+
+        .status-card {
+        background: #495057;
+        border-radius: 15px;
+        padding: 0;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+        width: 100%;
+        max-width: 400px;
+        min-height: 80px;
+        overflow: hidden;
+        margin: 0 auto 15px auto;
+        }
+
+        .status-card-content {
+        display: flex;
+        height: 100%;
+        border-radius: 15px;
+        overflow: hidden;
+        }
+
+        .on-queue-section {
+        flex: 1;
+        background: #28a745;
+        border-radius: 15px 0 0 15px;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        }
+
+        .next-queue-section {
+        flex: 1;
+        background: transparent;
+        border-radius: 0 15px 15px 0;
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        text-align: center;
+        }
+
+        .status-label {
+        font-size: 12px;
+        font-weight: bold;
+        text-transform: uppercase;
+        letter-spacing: 1px;
+        color: white;
+        margin-bottom: 5px;
+        }
+
+        .status-number {
+        font-size: 36px;
+        font-weight: bold;
+        font-family: 'Arial Black', Arial, sans-serif;
+        color: white;
+        text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        /* Header */
+        .monitor-header {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        background: #2c2c2c;
+        padding: 15px 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        z-index: 100;
+        }
+
+        .header-title {
+        font-size: 18px;
+        font-weight: bold;
+        }
+
+        .header-datetime {
+        font-size: 16px;
+        font-weight: bold;
+        }
+
+
+        /* Animations */
+        @keyframes fadeIn {
+        from { opacity: 0; transform: translateY(20px); }
+        to { opacity: 1; transform: translateY(0); }
+        }
+
+        .completed-number.new {
+        animation: fadeIn 0.5s ease-out;
+        }
+
+        /* Scrollbar styling */
+        .completed-numbers::-webkit-scrollbar {
+        width: 8px;
+        }
+
+        .completed-numbers::-webkit-scrollbar-track {
+        background: rgba(255, 255, 255, 0.1);
+        border-radius: 4px;
+        }
+
+        .completed-numbers::-webkit-scrollbar-thumb {
+        background: rgba(255, 255, 255, 0.3);
+        border-radius: 4px;
+        }
+
+        .completed-numbers::-webkit-scrollbar-thumb:hover {
+        background: rgba(255, 255, 255, 0.5);
+        }
+    </style>
+    </head>
+    <body>
+    <!-- Header -->
+    <header class="monitor-header">
+        <div class="header-title"><a href="index.html" style="color: inherit; text-decoration: none;">SDOIN Queueing Management System</a></div>
+        <div class="header-datetime" id="datetime">Loading...</div>
+    </header>
+
+    <!-- Main Queue Monitor -->
+    <div class="queue-monitor-container" style="margin-top: 80px;">
+        <!-- Receiving Station -->
+        <div class="station-section">
+        <div class="station-title">Receiving Station</div>
+        
+        <!-- Status Card -->
+        <div class="status-card">
+            <div class="status-card-content">
+            <div class="on-queue-section">
+                <div class="status-label">ON QUEUE</div>
+                <div class="status-number" id="receivingCurrent">00</div>
+            </div>
+            <div class="next-queue-section">
+                <div class="status-label">NEXT QUEUE</div>
+                <div class="status-number" id="receivingNext">00</div>
+            </div>
+            </div>
+        </div>
+        
+        <!-- Pending Queue Numbers -->
+        <div class="completed-numbers" id="receivingCompleted">
+            <!-- Pending queue numbers will be populated by JavaScript -->
+        </div>
+        </div>
+
+        <!-- Releasing Station -->
+        <div class="station-section">
+        <div class="station-title">Releasing Station</div>
+        
+        <!-- Status Card -->
+        <div class="status-card">
+            <div class="status-card-content">
+            <div class="on-queue-section">
+                <div class="status-label">ON QUEUE</div>
+                <div class="status-number" id="releasingCurrent">00</div>
+            </div>
+            <div class="next-queue-section">
+                <div class="status-label">NEXT QUEUE</div>
+                <div class="status-number" id="releasingNext">00</div>
+            </div>
+            </div>
+        </div>
+        
+        <!-- Pending Queue Numbers -->
+        <div class="completed-numbers" id="releasingCompleted">
+            <!-- Pending queue numbers will be populated by JavaScript -->
+        </div>
+        </div>
+    </div>
+
+
+    <script>
+        // Function to update date/time
+        function updateDateTime() {
+        const now = new Date();
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+                        'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        const month = months[now.getMonth()];
+        const day = now.getDate().toString().padStart(2, '0');
+        const year = now.getFullYear();
+
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = (hours % 12 || 12).toString().padStart(2, '0');
+
+        const dateString = `${month} ${day}, ${year}`;
+        const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
+
+        document.getElementById('datetime').textContent = `${dateString} | ${timeString}`;
+        }
+
+         // Function to update receiving station display
+         function updateReceivingStation() {
+         try {
+             const queueList = JSON.parse(localStorage.getItem('receiving_queue') || '[]');
+             const pending = queueList.filter(item => item.status === 'pending').sort((a, b) => a.createdAt - b.createdAt);
+
+             // Update current and next queue (first come, first served)
+             const current = pending[0]?.number || '00';
+             const next = pending[1]?.number || '00';
+             
+             document.getElementById('receivingCurrent').textContent = String(current).padStart(2, '0');
+             document.getElementById('receivingNext').textContent = String(next).padStart(2, '0');
+
+             // Exclude first two numbers (ON QUEUE and NEXT QUEUE) from pending tiles
+             const remainingPending = pending.slice(2); // Skip first 2 items
+             const pendingNumbers = remainingPending.map(item => String(item.number).padStart(2, '0'));
+
+             // Update display - show remaining pending numbers in chronological order
+             const container = document.getElementById('receivingCompleted');
+             
+             // Clear container and rebuild with remaining numbers in order
+             container.innerHTML = '';
+             pendingNumbers.forEach(number => {
+             const div = document.createElement('div');
+             div.className = 'completed-number';
+             div.textContent = number;
+             container.appendChild(div);
+             });
+
+         } catch (e) {
+             console.log('Receiving station data not available');
+         }
+         }
+
+         // Function to update releasing station display
+         function updateReleasingStation() {
+         try {
+             const queueList = JSON.parse(localStorage.getItem('releasing_queue') || '[]');
+             const pending = queueList.filter(item => item.status === 'pending').sort((a, b) => a.createdAt - b.createdAt);
+
+             // Update current and next queue (first come, first served)
+             const current = pending[0]?.number || '00';
+             const next = pending[1]?.number || '00';
+             
+             document.getElementById('releasingCurrent').textContent = String(current).padStart(2, '0');
+             document.getElementById('releasingNext').textContent = String(next).padStart(2, '0');
+
+             // Exclude first two numbers (ON QUEUE and NEXT QUEUE) from pending tiles
+             const remainingPending = pending.slice(2); // Skip first 2 items
+             const pendingNumbers = remainingPending.map(item => String(item.number).padStart(2, '0'));
+
+             // Update display - show remaining pending numbers in chronological order
+             const container = document.getElementById('releasingCompleted');
+             
+             // Clear container and rebuild with remaining numbers in order
+             container.innerHTML = '';
+             pendingNumbers.forEach(number => {
+             const div = document.createElement('div');
+             div.className = 'completed-number';
+             div.textContent = number;
+             container.appendChild(div);
+             });
+
+         } catch (e) {
+             console.log('Releasing station data not available');
+         }
+         }
+
+        // Function to update all displays
+        function updateAllDisplays() {
+        updateDateTime();
+        updateReceivingStation();
+        updateReleasingStation();
+        }
+
+        // Function to add new completed number with animation
+        function addNewCompletedNumber(stationType, number) {
+        const container = document.getElementById(`${stationType}Completed`);
+        const div = document.createElement('div');
+        div.className = 'completed-number new';
+        div.textContent = String(number).padStart(2, '0');
+        
+        // Insert at the beginning
+        if (container.firstChild) {
+            container.insertBefore(div, container.firstChild);
+        } else {
+            container.appendChild(div);
+        }
+
+        // Remove the oldest if we have more than 15
+        const children = container.children;
+        if (children.length > 15) {
+            container.removeChild(children[children.length - 1]);
+        }
+
+        // Remove animation class after animation completes
+        setTimeout(() => {
+            div.classList.remove('new');
+        }, 500);
+        }
+
+        // Listen for storage changes
+        window.addEventListener('storage', function(e) {
+        if (e.key === 'receiving_last_update' || e.key === 'receiving_queue') {
+            updateReceivingStation();
+        }
+        if (e.key === 'releasing_last_update' || e.key === 'releasing_queue') {
+            updateReleasingStation();
+        }
+        updateDateTime();
+        });
+
+        // Initial setup
+        document.addEventListener('DOMContentLoaded', function() {
+        updateAllDisplays();
+        
+        // Auto-refresh every 5 seconds
+        setInterval(updateAllDisplays, 5000);
+        
+        // Update datetime every second
+        setInterval(updateDateTime, 1000);
+        });
+
+        // Simulate some demo data on first load
+        if (!localStorage.getItem('receiving_queue')) {
+        const demoReceiving = [
+            { id: 1, number: '05', status: 'done', createdAt: Date.now() - 1000 },
+            { id: 2, number: '23', status: 'done', createdAt: Date.now() - 2000 },
+            { id: 3, number: '33', status: 'done', createdAt: Date.now() - 3000 },
+            { id: 4, number: '42', status: 'done', createdAt: Date.now() - 4000 },
+            { id: 5, number: '51', status: 'done', createdAt: Date.now() - 5000 },
+            { id: 6, number: '12', status: 'done', createdAt: Date.now() - 6000 },
+            { id: 7, number: '90', status: 'done', createdAt: Date.now() - 7000 },
+            { id: 8, number: '07', status: 'done', createdAt: Date.now() - 8000 },
+            { id: 9, number: '02', status: 'done', createdAt: Date.now() - 9000 },
+            { id: 10, number: '73', status: 'done', createdAt: Date.now() - 10000 },
+            { id: 11, number: '03', status: 'pending', createdAt: Date.now() },
+            { id: 12, number: '18', status: 'pending', createdAt: Date.now() - 500 }
+        ];
+        
+        const demoReleasing = [
+            { id: 1, number: '41', status: 'done', createdAt: Date.now() - 1000 },
+            { id: 2, number: '66', status: 'done', createdAt: Date.now() - 2000 },
+            { id: 3, number: '59', status: 'done', createdAt: Date.now() - 3000 },
+            { id: 4, number: '01', status: 'pending', createdAt: Date.now() },
+            { id: 5, number: '35', status: 'pending', createdAt: Date.now() - 200 }
+        ];
+        
+        localStorage.setItem('receiving_queue', JSON.stringify(demoReceiving));
+        localStorage.setItem('releasing_queue', JSON.stringify(demoReleasing));
+        
+        // Trigger update after setting demo data
+        setTimeout(updateAllDisplays, 100);
+        }
+    </script>
+    </body>
+    </html>

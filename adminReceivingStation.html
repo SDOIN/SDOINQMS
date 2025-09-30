@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SDOIN Queueing Management System - Receiving Station</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="script.js"></script>
+  <style>
+    /* Receiving Station Specific Styles */
+    .receiving-station-container {
+      display: flex;
+      height: calc(100vh - 60px);
+      overflow: hidden;
+      margin-top: 10px;
+    }
+
+    .left-panel {
+      width: 35%;
+      background: linear-gradient(rgba(0,0,0,0.6), rgba(0,0,0,0.6));
+      display: flex;
+      flex-direction: column;
+      padding: 15px;
+    }
+
+    .logo-title-section {
+      background: #f5f5f5;
+      padding: 15px;
+      border-radius: 12px;
+      text-align: center;
+      margin-bottom: 15px;
+    }
+
+    .logos {
+      display: flex;
+      justify-content: center;
+      gap: 15px;
+      margin-bottom: 10px;
+    }
+
+    .logo-image {
+      height: 40px;
+      object-fit: contain;
+    }
+
+    .bagong-pilipinas-logo {
+      height: 50px;
+    }
+
+    .system-title {
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 5px;
+    }
+
+    /* Ensure header title stays white */
+    header.top-bar .system-title {
+      color: white;
+    }
+
+    .system-subtitle {
+      font-size: 14px;
+      font-weight: 600;
+      color: #333;
+      letter-spacing: 1px;
+    }
+
+    .navigation-section {
+      background: rgba(44, 44, 44, 0.8);
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+
+    .nav-link {
+      display: block;
+      color: white;
+      text-decoration: none;
+      padding: 10px 14px;
+      margin-bottom: 6px;
+      border-radius: 8px;
+      transition: background 0.3s ease;
+      font-size: 14px;
+      font-weight: 500;
+    }
+
+    .nav-link:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    .nav-link.active {
+      background: #495057;
+      color: white;
+      font-weight: bold;
+      border-left: 4px solid #000;
+    }
+
+    .queue-monitoring {
+      background: rgba(44, 44, 44, 0.8);
+      padding: 15px;
+      border-radius: 12px;
+      margin-bottom: 15px;
+    }
+
+    .queue-display {
+      display: flex;
+      align-items: center;
+      margin-bottom: 10px;
+      padding: 12px;
+      border-radius: 8px;
+    }
+
+    .queue-display.on-queue {
+      background: #28a745;
+    }
+
+    .queue-display.next-queue {
+      background: #ffc107;
+      color: #000;
+    }
+
+    .queue-label {
+      font-size: 14px;
+      font-weight: bold;
+      margin-right: 15px;
+      color: white;
+    }
+
+    .queue-number {
+      font-size: 28px;
+      font-weight: bold;
+      color: white;
+    }
+
+    .queue-display.next-queue .queue-label,
+    .queue-display.next-queue .queue-number {
+      color: #000;
+    }
+
+    .bottom-info {
+      margin-top: auto;
+      text-align: center;
+      color: #bbb;
+      font-size: 12px;
+    }
+
+    .right-panel {
+      width: 65%;
+      background: #2c2c2c;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .station-header {
+      background: #2c2c2c;
+      padding: 15px;
+      text-align: center;
+    }
+
+    .station-title {
+      font-size: 24px;
+      font-weight: bold;
+      color: white;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+    }
+
+    .queue-list-container {
+      flex: 1;
+      padding: 15px;
+      overflow-y: auto;
+      max-height: calc(100vh - 180px);
+      scroll-behavior: smooth;
+    }
+
+    .queue-item {
+      background: #f8f8f8;
+      padding: 15px;
+      margin-bottom: 10px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    }
+
+    .queue-item-number {
+      font-size: 20px;
+      font-weight: bold;
+      color: #333;
+      margin-right: 15px;
+      min-width: 50px;
+    }
+
+    .queue-item-content {
+      flex: 1;
+    }
+
+    .queue-item-title {
+      font-size: 14px;
+      font-weight: bold;
+      color: #333;
+      margin-bottom: 3px;
+    }
+
+    .queue-item-tracking {
+      font-size: 12px;
+      color: #666;
+      font-family: monospace;
+    }
+
+    .queue-item-status {
+      font-size: 12px;
+      color: #000;
+      font-weight: bold;
+    }
+
+    /* Entire queue item background colors */
+    .queue-item[data-status="on-queue"] {
+      background: #28a745;
+    }
+
+    .queue-item[data-status="next-queue"] {
+      background: #ffc107;
+    }
+
+    .queue-item[data-status="pending"] {
+      background: #f8f8f8;
+    }
+
+    /* Text color adjustments for better contrast */
+    .queue-item[data-status="on-queue"] .queue-item-number,
+    .queue-item[data-status="on-queue"] .queue-item-title,
+    .queue-item[data-status="on-queue"] .queue-item-tracking {
+      color: #fff;
+    }
+
+    .queue-item[data-status="next-queue"] .queue-item-number,
+    .queue-item[data-status="next-queue"] .queue-item-title,
+    .queue-item[data-status="next-queue"] .queue-item-tracking {
+      color: #000;
+    }
+
+    .queue-item[data-status="on-queue"] .queue-item-status {
+      color: #fff;
+    }
+
+    .queue-item[data-status="next-queue"] .queue-item-status {
+      color: #000;
+    }
+
+    .station-footer {
+      background: transparent;
+      padding: 10px;
+      text-align: center;
+      color: white;
+      font-size: 11px;
+    }
+
+    /* Scrollbar Styling */
+    .queue-list-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .queue-list-container::-webkit-scrollbar-track {
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+    }
+
+    .queue-list-container::-webkit-scrollbar-thumb {
+      background: rgba(255, 255, 255, 0.3);
+      border-radius: 4px;
+    }
+
+    .queue-list-container::-webkit-scrollbar-thumb:hover {
+      background: rgba(255, 255, 255, 0.5);
+    }
+
+    /* Modal close button styles */
+    .modal-close-btn {
+      position: absolute;
+      top: 15px;
+      right: 15px;
+      background: transparent;
+      color: black;
+      border: none;
+      border-radius: 50%;
+      width: 50px;
+      height: 50px;
+      font-size: 32px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: color 0.3s ease;
+    }
+
+    .modal-close-btn:hover {
+      color: #333;
+    }
+
+    .modal-button-group {
+      display: flex;
+      gap: 15px;
+      justify-content: center;
+      align-items: center;
+      margin-top: 15px;
+    }
+
+    .modal-cancel-button, .modal-return-button {
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 14px;
+      font-weight: bold;
+      transition: all 0.3s ease;
+      height: 48px;
+      width: 100px;
+      flex: 1;
+      max-width: 100px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      box-sizing: border-box;
+    }
+
+    .modal-cancel-button {
+      background: #6c757d;
+      color: white;
+      margin-top: 32px;
+    }
+
+    .modal-cancel-button:hover {
+      background: #5a6268;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+
+    .modal-return-button {
+      background: #28a745;
+      color: white;
+    }
+
+    .modal-return-button:hover {
+      background: #218838;
+      transform: translateY(-2px);
+      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    }
+
+    /* Override datetime font weight */
+    .datetime {
+      font-weight: bold !important;
+    }
+  </style>
+</head>
+<body>
+  <!-- Top Bar -->
+  <header class="top-bar">
+        <div class="system-title"><a href="index.html" style="color: inherit; text-decoration: none;">SDOIN Queueing Management System</a></div>
+    <div style="display:flex; align-items:center; gap:96px;">
+      <div class="datetime" id="datetime">Loading...</div>
+      <button id="logoutBtn" style="padding:8px 12px; border:none; border-radius:6px; background:#dc3545; color:#fff; font-weight:bold; cursor:pointer; text-transform:uppercase;">LOGOUT</button>
+    </div>
+  </header>
+
+  <div class="receiving-station-container">
+    <!-- Left Panel -->
+    <div class="left-panel">
+      <!-- Logo and Title Section -->
+      <div class="logo-title-section">
+        <div class="logos">
+          <img src="images/SDOINLogo.png" alt="SDOIN Logo" class="logo-image" />
+          <img src="images/DEPEDLogo.png" alt="DepED Logo" class="logo-image" />
+          <img src="images/BagongPilipinasLogo.png" alt="Bagong Pilipinas Logo" class="logo-image bagong-pilipinas-logo" />
+        </div>
+        <div class="system-title">SDO Ilocos Norte</div>
+        <div class="system-subtitle">QUEUEING MANAGEMENT SYSTEM</div>
+      </div>
+
+      <!-- Navigation Section -->
+      <div class="navigation-section">
+        <a href="adminReceivingStation.html" class="nav-link active">Receiving Station</a>
+        <a href="adminReleasingStation.html" class="nav-link">Releasing Station</a>
+      </div>
+
+      <!-- Queue Monitoring Section -->
+      <div class="queue-monitoring">
+        <div style="text-align: center; margin-bottom: 15px; font-size: 16px; font-weight: bold; color: white;">QUEUE MONITOR</div>
+        <div class="queue-display on-queue">
+          <div class="queue-label">ON QUEUE</div>
+          <div class="queue-number" id="currentQueue">01</div>
+        </div>
+        <div class="queue-display next-queue">
+          <div class="queue-label">NEXT QUEUE</div>
+          <div class="queue-number" id="nextQueue">32</div>
+        </div>
+      </div>
+
+      <!-- Bottom Info -->
+      <div class="bottom-info">
+        <div>RECORDS OFFICE</div>
+        <div>SDOIN</div>
+      </div>
+    </div>
+
+    <!-- Right Panel -->
+    <div class="right-panel">
+      <!-- Station Header -->
+      <div class="station-header">
+        <div class="station-title">RECEIVING STATION</div>
+      </div>
+
+      <!-- Queue List Container -->
+      <div class="queue-list-container" id="queueList">
+        <!-- Will show pending items; first two reflect ON/NEXT -->
+      </div>
+
+      <!-- Station Footer -->
+      <div class="station-footer">
+        <p>Made with ❤️ and ☕</p>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Protect page - require auth token
+    (function enforceAuth(){
+      try {
+        const token = localStorage.getItem('admin_auth_token');
+        const exp = parseInt(localStorage.getItem('admin_auth_exp') || '0', 10);
+        if (!token || Date.now() >= exp) {
+          window.location.href = 'index.html';
+        }
+      } catch (e) {
+        window.location.href = 'index.html';
+      }
+    })();
+    // Render queue list; first two pending map to ON and NEXT
+    function renderFromStorage() {
+      const queueList = document.getElementById('queueList');
+      queueList.innerHTML = '';
+      const list = JSON.parse(localStorage.getItem('receiving_queue') || '[]');
+      const pending = list.filter(i => i.status === 'pending');
+      const current = pending[0]?.number || '00';
+      const next = pending[1]?.number || '00';
+
+      document.getElementById('currentQueue').textContent = String(current).padStart(2, '0');
+      document.getElementById('nextQueue').textContent = String(next).padStart(2, '0');
+
+      pending.forEach((item, idx) => {
+        const row = document.createElement('div');
+        row.className = 'queue-item';
+        row.setAttribute('data-id', item.id);
+        const status = idx === 0 ? 'on-queue' : (idx === 1 ? 'next-queue' : 'pending');
+        const statusText = idx === 0 ? 'ON QUEUE' : (idx === 1 ? 'NEXT' : 'PENDING');
+        
+        row.innerHTML = `
+          <div class="queue-item-number">${String(item.number).padStart(2,'0')}</div>
+          <div class="queue-item-content">
+            <div class="queue-item-title">DOCUMENT TRACKING NUMBER</div>
+            <div class="queue-item-tracking">${item.dts ? item.dts : '—'}</div>
+          </div>
+          <div class="queue-item-status">${statusText}</div>`;
+        row.setAttribute('data-status', status);
+        row.addEventListener('click', () => openItemModal(item));
+        queueList.appendChild(row);
+      });
+    }
+
+    // Listen for storage updates to reflect new items
+    window.addEventListener('storage', function(e) {
+      if (e.key === 'receiving_queue' || e.key === 'receiving_last_update') {
+        renderFromStorage();
+      }
+    });
+
+    // Update date/time in header
+    function updateDateTime() {
+      const now = new Date();
+
+      const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+                      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      const month = months[now.getMonth()];
+      const day = now.getDate().toString().padStart(2, '0');
+      const year = now.getFullYear();
+
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = (hours % 12 || 12).toString().padStart(2, '0');
+
+      const dateString = `${month} ${day}, ${year}`;
+      const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
+
+      document.getElementById('datetime').textContent = `${dateString} | ${timeString}`;
+    }
+    setInterval(updateDateTime, 1000);
+    updateDateTime();
+
+    // Logout handler
+    document.getElementById('logoutBtn').addEventListener('click', function(){
+      try {
+        localStorage.removeItem('admin_auth_token');
+        localStorage.removeItem('admin_auth_exp');
+      } catch (e) {}
+      window.location.href = 'index.html';
+    });
+
+    // Initialize the page
+    document.addEventListener('DOMContentLoaded', function() {
+      renderFromStorage();
+    });
+
+    // Modal for item details
+    function openItemModal(item) {
+      const overlay = document.createElement('div');
+      overlay.className = 'modal-overlay show';
+      overlay.innerHTML = `
+        <div class="queue-modal">
+          <button class="modal-close-btn" id="closeModal">&times;</button>
+          <div class="queue-header">QUEUE DETAILS</div>
+          <div class="modal-main-content">
+            <div class="modal-queue-number">${String(item.number).padStart(2,'0')}</div>
+            <div class="modal-message-section">
+              <div class="modal-greeting">Document Tracking</div>
+              <div class="modal-instructions">${item.dts ? item.dts : 'Not provided'}</div>
+            </div>
+          </div>
+          <div class="modal-button-group">
+            <button class="modal-return-button" id="markDone">DONE</button>
+            <button class="modal-cancel-button" id="cancelModal">CANCEL</button>
+          </div>
+          <div class="modal-countdown" style="display:none"></div>
+        </div>`;
+      document.body.appendChild(overlay);
+      overlay.addEventListener('click', (e) => { if (e.target === overlay) overlay.remove(); });
+      
+      // Close button (X)
+      document.getElementById('closeModal').addEventListener('click', () => {
+        overlay.remove();
+      });
+      
+      // Cancel button - deletes the queue
+      document.getElementById('cancelModal').addEventListener('click', () => {
+        try {
+          const list = JSON.parse(localStorage.getItem('receiving_queue') || '[]');
+          const filtered = list.filter(x => x.id !== item.id);
+          localStorage.setItem('receiving_queue', JSON.stringify(filtered));
+          localStorage.setItem('receiving_last_update', String(Date.now()));
+        } catch (e) {}
+        overlay.remove();
+        renderFromStorage();
+      });
+      
+      // Done button
+      document.getElementById('markDone').addEventListener('click', () => {
+        try {
+          const list = JSON.parse(localStorage.getItem('receiving_queue') || '[]');
+          const idx = list.findIndex(x => x.id === item.id);
+          if (idx !== -1) {
+            list[idx].status = 'done';
+            localStorage.setItem('receiving_queue', JSON.stringify(list));
+            localStorage.setItem('receiving_last_update', String(Date.now()));
+          }
+        } catch (e) {}
+        overlay.remove();
+        renderFromStorage();
+      });
+    }
+  </script>
+</body>
+</html>

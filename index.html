@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SDOIN Queueing Management System - Main Dashboard</title>
+  <link rel="stylesheet" href="styles.css" />
+  <script defer src="script.js"></script>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Arial', sans-serif;
+      background: linear-gradient(rgba(0, 0, 0, 0.781), rgba(0, 0, 0, 0.781)), url('images/SDOINBackground.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      min-height: 100vh;
+      color: white;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: flex-start;
+      padding-top: 90px;
+      padding-bottom: 20px;
+    }
+
+    /* Main Banner */
+    .main-banner {
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 15px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+      text-align: center;
+      width: 95%;
+      max-width: 700px;
+    }
+
+    .logo-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 20px;
+      margin-bottom: 20px;
+      flex-wrap: wrap;
+    }
+
+    .logo {
+      height: 60px;
+      width: auto;
+      transition: transform 0.3s ease;
+    }
+
+    .logo:hover {
+      transform: scale(1.05);
+    }
+
+    .banner-title {
+      font-size: 22px;
+      font-weight: bold;
+      color: #2c2c2c;
+      margin-bottom: 6px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .banner-subtitle {
+      font-size: 16px;
+      color: #555;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    /* Header */
+    .main-header {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      background: #2c2c2c;
+      padding: 15px 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      z-index: 100;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+    }
+
+    .header-title {
+      font-size: 18px;
+      font-weight: bold;
+      color: white;
+      margin: 0;
+    }
+
+    .header-title a {
+      color: inherit;
+      text-decoration: none;
+      transition: opacity 0.3s ease;
+    }
+
+    .header-title a:hover {
+      opacity: 0.8;
+    }
+
+    .header-datetime {
+      font-size: 16px;
+      font-weight: bold;
+      color: white;
+      margin: 0;
+    }
+
+    /* Main Content */
+    .main-content {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 25px;
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      width: 95%;
+      max-width: 500px;
+    }
+
+    .select-text {
+      font-size: 20px;
+      font-weight: bold;
+      margin-bottom: 25px;
+      color: white;
+      text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+    }
+
+    /* Navigation Buttons */
+    .nav-buttons {
+      display: flex;
+      flex-direction: column;
+      gap: 15px;
+      width: 100%;
+    }
+
+    .nav-btn {
+      background: linear-gradient(135deg, #28a745, #20c997);
+      color: white;
+      border: none;
+      padding: 15px 25px;
+      border-radius: 10px;
+      font-size: 16px;
+      font-weight: bold;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 3px 12px rgba(40, 167, 69, 0.3);
+      text-decoration: none;
+      display: block;
+      width: 100%;
+      text-align: center;
+    }
+
+    .nav-btn:hover {
+      background: linear-gradient(135deg, #218838, #1ea480);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
+    }
+
+    .nav-btn.secondary {
+      background: linear-gradient(135deg, #007bff, #0056b3);
+      box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
+    }
+
+    .nav-btn.secondary:hover {
+      background: linear-gradient(135deg, #0056b3, #004494);
+      box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
+    }
+
+    .nav-btn.tertiary {
+      background: linear-gradient(135deg, #ffc107, #e0a800);
+      color: #333;
+      box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
+    }
+
+    .nav-btn.tertiary:hover {
+      background: linear-gradient(135deg, #e0a800, #d39e00);
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      body {
+        padding-top: 80px;
+      }
+      
+      .logo-container {
+        gap: 10px;
+      }
+      
+      .logo {
+        height: 45px;
+      }
+      
+      .banner-title {
+        font-size: 18px;
+      }
+      
+      .banner-subtitle {
+        font-size: 14px;
+      }
+      
+      .main-header {
+        position: fixed;
+        top: 0;
+        left: 0;
+        right: 0;
+      }
+      
+      .main-content {
+        padding: 20px 15px;
+      }
+      
+      .select-text {
+        font-size: 18px;
+        margin-bottom: 20px;
+      }
+      
+      .nav-btn {
+        padding: 12px 20px;
+        font-size: 14px;
+      }
+      
+      .nav-buttons {
+        gap: 12px;
+      }
+    }
+
+    /* Footer */
+    .footer {
+      position: absolute;
+      bottom: 10px;
+      left: 50%;
+      transform: translateX(-50%);
+      color: rgba(255, 255, 255, 0.7);
+      font-size: 14px;
+      text-align: center;
+      background: transparent;
+      padding: 5px 15px;
+    }
+  </style>
+</head>
+<body>
+  <!-- Header -->
+  <header class="main-header">
+    <div class="header-title"><a href="index.html" style="color: inherit; text-decoration: none;">SDOIN Queueing Management System</a></div>
+    <div class="header-datetime" id="datetime">Loading...</div>
+  </header>
+
+  <!-- Main Banner -->
+  <div class="main-banner">
+    <div class="logo-container">
+      <img src="images/SDOINLogo.png" alt="SDOIN Logo" class="logo">
+      <img src="images/DEPEDLogo.png" alt="DepED Logo" class="logo">
+      <img src="images/BagongPilipinasLogo.png" alt="Bagong Pilipinas Logo" class="logo">
+    </div>
+    <div class="banner-title">SCHOOLS DIVISION OF ILOCOS NORTE</div>
+    <div class="banner-subtitle">QUEUEING MANAGEMENT SYSTEM</div>
+  </div>
+
+  <!-- Main Content -->
+  <div class="main-content">
+    <div class="select-text">PLEASE SELECT AN OPTION</div>
+    
+    <div class="nav-buttons">
+      <a href="queueMonitor.html" class="nav-btn">QUEUE MONITORING</a>
+      <button id="openAdminLogin" class="nav-btn secondary" type="button">ADMIN STATION</button>
+      <a href="userReceiving.html" class="nav-btn tertiary">USER STATION</a>
+    </div>
+  </div>
+
+  <!-- Admin Login Modal -->
+  <div id="adminLoginOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter: blur(2px); z-index:9999; align-items:center; justify-content:center;">
+    <div style="background:#ffffff; color:#222; width:90%; max-width:420px; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.35); overflow:hidden;">
+      <div style="background:#2c2c2c; color:#fff; padding:14px 18px; font-weight:bold; display:flex; align-items:center; justify-content:space-between;">
+        <span>Administrator Login</span>
+        <button id="closeAdminLogin" style="background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer;">×</button>
+      </div>
+      <div style="padding:22px 20px;">
+        <form id="adminLoginForm">
+          <div style="margin-bottom:14px;">
+            <label for="adminUsername" style="display:block; font-size:14px; margin-bottom:6px;">Username</label>
+            <input id="adminUsername" type="text" required style="width:100%; padding:12px; border:1px solid #ccc; border-radius:8px; font-size:14px;" placeholder="Enter username" />
+          </div>
+          <div style="margin-bottom:18px;">
+            <label for="adminPassword" style="display:block; font-size:14px; margin-bottom:6px;">Password</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input id="adminPassword" type="password" required style="flex:1; padding:12px; border:1px solid #ccc; border-radius:8px; font-size:14px;" placeholder="Enter password" />
+              <button type="button" id="togglePassword" aria-label="Show password" title="Show/Hide password" style="padding:10px 12px; border:1px solid #ccc; background:#f5f5f5; color:#222; border-radius:8px; cursor:pointer;">Show</button>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button type="button" id="cancelAdminLogin" style="padding:10px 14px; border:none; border-radius:8px; background:#6c757d; color:#fff; cursor:pointer;">Cancel</button>
+            <button type="submit" style="padding:10px 14px; border:none; border-radius:8px; background:#007bff; color:#fff; cursor:pointer; font-weight:bold;">Login</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- One-time Admin Setup Modal (stores only hashes locally) -->
+  <div id="adminSetupOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter: blur(2px); z-index:10000; align-items:center; justify-content:center;">
+    <div style="background:#ffffff; color:#222; width:90%; max-width:460px; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.35); overflow:hidden;">
+      <div style="background:#2c2c2c; color:#fff; padding:14px 18px; font-weight:bold; display:flex; align-items:center; justify-content:space-between;">
+        <span>ADMIN LOGIN</span>
+        <button id="closeAdminSetup" style="background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer;">×</button>
+      </div>
+      <div style="padding:22px 20px;">
+        <form id="adminSetupForm">
+          <div style="margin-bottom:14px;">
+            <label for="setupUsername" style="display:block; font-size:14px; margin-bottom:6px;">Username</label>
+            <input id="setupUsername" type="text" required style="width:100%; padding:12px; border:1px solid #ccc; border-radius:8px; font-size:14px;" placeholder="Enter username" />
+          </div>
+          <div style="margin-bottom:18px;">
+            <label for="setupPassword" style="display:block; font-size:14px; margin-bottom:6px;">Password</label>
+            <div style="display:flex; gap:8px; align-items:center;">
+              <input id="setupPassword" type="password" required style="flex:1; padding:12px; border:1px solid #ccc; border-radius:8px; font-size:14px;" placeholder="Enter password" />
+              <button type="button" id="toggleSetupPassword" aria-label="Show password" title="Show/Hide password" style="padding:10px 12px; border:1px solid #ccc; background:#f5f5f5; color:#222; border-radius:8px; cursor:pointer;">Show</button>
+            </div>
+          </div>
+          <div style="display:flex; gap:10px; justify-content:flex-end;">
+            <button type="button" id="cancelAdminSetup" style="padding:10px 14px; border:none; border-radius:8px; background:#6c757d; color:#fff; cursor:pointer;">Cancel</button>
+            <button type="submit" style="padding:10px 14px; border:none; border-radius:8px; background:#28a745; color:#fff; cursor:pointer; font-weight:bold;">LOGIN</button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    Made with ❤️ and ☕
+  </footer>
+
+  <script>
+    // Function to update date/time
+    function updateDateTime() {
+      const now = new Date();
+      const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+                      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+      const month = months[now.getMonth()];
+      const day = now.getDate().toString().padStart(2, '0');
+      const year = now.getFullYear();
+
+      let hours = now.getHours();
+      const minutes = now.getMinutes().toString().padStart(2, '0');
+      const seconds = now.getSeconds().toString().padStart(2, '0');
+      const ampm = hours >= 12 ? 'PM' : 'AM';
+      hours = (hours % 12 || 12).toString().padStart(2, '0');
+
+      const dateString = `${month} ${day}, ${year}`;
+      const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
+
+      document.getElementById('datetime').textContent = `${dateString} | ${timeString}`;
+    }
+
+    // Admin login helpers (lightweight client-side protection)
+    // Secrets are lightly obfuscated and verified using SHA-256 at runtime.
+    function buildUsernameSecret(){
+      const parts = ['SMQ','sdrocer'];
+      return parts.reverse().join('').split('').reverse().join('');
+    }
+    function buildPasswordSecret(){
+      const parts = ['5202','@SMQsdrocer','NIO','DS'];
+      return parts.reverse().join('').split('').reverse().join('');
+    }
+    async function sha256(text){
+      const data = new TextEncoder().encode(text);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    }
+    const AUTH_KEY = 'admin_auth_token';
+    const AUTH_EXP_KEY = 'admin_auth_exp';
+    const ADMIN_USER_HASH_KEY = 'admin_user_hash_sha256';
+    const ADMIN_PASS_HASH_KEY = 'admin_pass_hash_sha256';
+
+    function isAuthValid() {
+      try {
+        const token = localStorage.getItem(AUTH_KEY);
+        const exp = parseInt(localStorage.getItem(AUTH_EXP_KEY) || '0', 10);
+        return !!token && Date.now() < exp;
+      } catch (e) { return false; }
+    }
+
+    function setAuth() {
+      // Set token valid for 8 hours
+      const exp = Date.now() + (8 * 60 * 60 * 1000);
+      localStorage.setItem(AUTH_KEY, btoa('authorized'));
+      localStorage.setItem(AUTH_EXP_KEY, String(exp));
+    }
+
+    function openAdminLoginModal() {
+      document.getElementById('adminLoginOverlay').style.display = 'flex';
+      document.getElementById('adminUsername').focus();
+    }
+    function closeAdminLoginModal() {
+      document.getElementById('adminLoginOverlay').style.display = 'none';
+      document.getElementById('adminLoginForm').reset();
+    }
+
+    // Wire up admin login
+    document.getElementById('openAdminLogin').addEventListener('click', async function() {
+      if (isAuthValid()) {
+        window.location.href = 'adminReceivingStation.html';
+        return;
+      }
+      // Require initialized hashes first
+      const hasHashes = !!(localStorage.getItem(ADMIN_USER_HASH_KEY) && localStorage.getItem(ADMIN_PASS_HASH_KEY));
+      if (!hasHashes) {
+        document.getElementById('adminSetupOverlay').style.display = 'flex';
+        document.getElementById('setupUsername').focus();
+      } else {
+        openAdminLoginModal();
+      }
+    });
+    document.getElementById('closeAdminLogin').addEventListener('click', closeAdminLoginModal);
+    document.getElementById('cancelAdminLogin').addEventListener('click', closeAdminLoginModal);
+    document.getElementById('adminLoginOverlay').addEventListener('click', function(e){ if (e.target === this) closeAdminLoginModal(); });
+
+    document.getElementById('adminLoginForm').addEventListener('submit', async function(e){
+      e.preventDefault();
+      const u = document.getElementById('adminUsername').value.trim();
+      const p = document.getElementById('adminPassword').value;
+      const [uHash, pHash] = await Promise.all([sha256(u), sha256(p)]);
+      const euHash = localStorage.getItem(ADMIN_USER_HASH_KEY);
+      const epHash = localStorage.getItem(ADMIN_PASS_HASH_KEY);
+      if (uHash === euHash && pHash === epHash) {
+        setAuth();
+        closeAdminLoginModal();
+        window.location.href = 'adminReceivingStation.html';
+      } else {
+        alert('Invalid credentials.');
+      }
+    });
+
+    // Admin Setup Handlers
+    function closeAdminSetup(){
+      document.getElementById('adminSetupOverlay').style.display = 'none';
+      document.getElementById('adminSetupForm').reset();
+    }
+    document.getElementById('closeAdminSetup').addEventListener('click', closeAdminSetup);
+    document.getElementById('cancelAdminSetup').addEventListener('click', closeAdminSetup);
+    document.getElementById('adminSetupOverlay').addEventListener('click', function(e){ if (e.target === this) closeAdminSetup(); });
+    document.getElementById('adminSetupForm').addEventListener('submit', async function(e){
+      e.preventDefault();
+      const u = document.getElementById('setupUsername').value.trim();
+      const p = document.getElementById('setupPassword').value;
+      const [uHash, pHash] = await Promise.all([sha256(u), sha256(p)]);
+      localStorage.setItem(ADMIN_USER_HASH_KEY, uHash);
+      localStorage.setItem(ADMIN_PASS_HASH_KEY, pHash);
+      closeAdminSetup();
+      openAdminLoginModal();
+    });
+
+    // Show/Hide toggle for setup password
+    (function(){
+      const btn = document.getElementById('toggleSetupPassword');
+      const pwd = document.getElementById('setupPassword');
+      btn.addEventListener('click', function(){
+        const showing = pwd.type === 'text';
+        pwd.type = showing ? 'password' : 'text';
+        btn.textContent = showing ? 'Show' : 'Hide';
+        btn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+        btn.setAttribute('title', showing ? 'Show/Hide password' : 'Show/Hide password');
+      });
+    })();
+
+    // Show/Hide password toggle
+    (function(){
+      const toggleBtn = document.getElementById('togglePassword');
+      const pwd = document.getElementById('adminPassword');
+      toggleBtn.addEventListener('click', function(){
+        const showing = pwd.type === 'text';
+        pwd.type = showing ? 'password' : 'text';
+        toggleBtn.textContent = showing ? 'Show' : 'Hide';
+        toggleBtn.setAttribute('title', showing ? 'Show password' : 'Hide password');
+        toggleBtn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
+      });
+    })();
+
+    // Initialize and update time every second
+    document.addEventListener('DOMContentLoaded', function() {
+      updateDateTime();
+      setInterval(updateDateTime, 1000);
+    });
+  </script>
+</body>
+</html>
