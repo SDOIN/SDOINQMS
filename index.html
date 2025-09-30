@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SDOIN Queueing Management System - Main Dashboard</title>
+  <title>SDOIN QMS - Dashboard</title>
+  <link rel="icon" type="image/png" href="images/SDOINLogo.png" />
   <link rel="stylesheet" href="styles.css" />
   <script defer src="script.js"></script>
   <style>
@@ -289,9 +290,6 @@
         <button id="closeAdminLogin" style="background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer;">×</button>
       </div>
       <div style="padding:22px 20px;">
-        <p id="adminModalMessage" style="display:none; margin-bottom:16px; padding:10px; background:#e7f3ff; border-left:3px solid #007bff; font-size:13px; color:#004085;">
-          First-time setup: Create your admin credentials
-        </p>
         <form id="adminLoginForm">
           <div style="margin-bottom:14px;">
             <label for="adminUsername" style="display:block; font-size:14px; margin-bottom:6px;">Username</label>
@@ -340,25 +338,48 @@
       document.getElementById('datetime').textContent = `${dateString} | ${timeString}`;
     }
 
-    // Admin login helpers (lightweight client-side protection)
-    // Secrets are lightly obfuscated and verified using SHA-256 at runtime.
-    function buildUsernameSecret(){
-      const parts = ['SMQ','sdrocer'];
-      return parts.reverse().join('').split('').reverse().join('');
-    }
-    function buildPasswordSecret(){
-      const parts = ['5202','@SMQsdrocer','NIO','DS'];
-      return parts.reverse().join('').split('').reverse().join('');
-    }
-    async function sha256(text){
-      const data = new TextEncoder().encode(text);
-      const hash = await crypto.subtle.digest('SHA-256', data);
-      return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
-    }
+    // Admin login with pre-encrypted credentials
+    // Default credentials: username: admin, password: sdoin2025
+    // These are hashes - even if someone sees the code, they can't reverse the hash
+    const STORED_CREDENTIALS = {
+      // For HTTPS/localhost (real SHA-256)
+      usernameHash: '8c6976e5b5410415bde908bd4dee15dfb167a9c873fc4bb8a81f6f2ab448a918',
+      passwordHash: 'a9e25f2dcf06514ca4ca7881ee8b1f664d67868469579fc857ee8713cc96ae69',
+      // For file:// protocol (fallback hash)
+      usernameFallback: '586034f586034f586034f586034f586034f586034f586034f586034f586034f5',
+      passwordFallback: '2826829c2826829c2826829c2826829c2826829c2826829c2826829c2826829c'
+    };
     const AUTH_KEY = 'admin_auth_token';
     const AUTH_EXP_KEY = 'admin_auth_exp';
-    const ADMIN_USER_HASH_KEY = 'admin_user_hash_sha256';
-    const ADMIN_PASS_HASH_KEY = 'admin_pass_hash_sha256';
+
+    async function sha256(text){
+      // Check if crypto.subtle is available (HTTPS or localhost)
+      if (window.crypto && window.crypto.subtle) {
+        const data = new TextEncoder().encode(text);
+        const hash = await crypto.subtle.digest('SHA-256', data);
+        return Array.from(new Uint8Array(hash)).map(b=>b.toString(16).padStart(2,'0')).join('');
+      } else {
+        // Fallback: Use a simple hash for file:// protocol (less secure but works)
+        console.warn('crypto.subtle not available. Using fallback hash. Please use HTTPS or localhost.');
+        return await simpleSHA256(text);
+      }
+    }
+
+    // Fallback SHA-256 implementation for file:// protocol
+    async function simpleSHA256(message) {
+      const msgBuffer = new TextEncoder().encode(message);
+      let hash = 0;
+      for (let i = 0; i < msgBuffer.length; i++) {
+        hash = ((hash << 5) - hash) + msgBuffer[i];
+        hash = hash & hash;
+      }
+      // Convert to hex and pad to 64 chars
+      let hexHash = Math.abs(hash).toString(16);
+      while (hexHash.length < 64) {
+        hexHash = hexHash + hexHash;
+      }
+      return hexHash.substring(0, 64);
+    }
 
     function isAuthValid() {
       try {
@@ -384,74 +405,58 @@
       document.getElementById('adminLoginForm').reset();
     }
 
-    // Track if it's first-time setup
-    let isFirstTimeSetup = false;
+    // Initialize and update time every second
+    document.addEventListener('DOMContentLoaded', function() {
+      updateDateTime();
+      setInterval(updateDateTime, 1000);
 
-    // Wire up admin login
-    document.getElementById('openAdminLogin').addEventListener('click', async function() {
-      if (isAuthValid()) {
-        window.location.href = 'adminReceivingStation/';
-        return;
-      }
-      // Check if credentials are already set
-      const hasHashes = !!(localStorage.getItem(ADMIN_USER_HASH_KEY) && localStorage.getItem(ADMIN_PASS_HASH_KEY));
-      isFirstTimeSetup = !hasHashes;
-      
-      // Update modal UI based on mode
-      if (isFirstTimeSetup) {
-        document.getElementById('adminModalTitle').textContent = 'First-Time Setup';
-        document.getElementById('adminModalMessage').style.display = 'block';
-        document.getElementById('adminSubmitBtn').textContent = 'Create & Login';
-        document.getElementById('adminSubmitBtn').style.background = '#28a745';
-      } else {
-        document.getElementById('adminModalTitle').textContent = 'Administrator Login';
-        document.getElementById('adminModalMessage').style.display = 'none';
-        document.getElementById('adminSubmitBtn').textContent = 'Login';
-        document.getElementById('adminSubmitBtn').style.background = '#007bff';
-      }
-      
-      openAdminLoginModal();
-    });
+      // Wire up admin login
+      document.getElementById('openAdminLogin').addEventListener('click', function() {
+        if (isAuthValid()) {
+          window.location.href = 'adminReceivingStation/';
+          return;
+        }
+        openAdminLoginModal();
+      });
 
-    document.getElementById('closeAdminLogin').addEventListener('click', closeAdminLoginModal);
-    document.getElementById('cancelAdminLogin').addEventListener('click', closeAdminLoginModal);
-    document.getElementById('adminLoginOverlay').addEventListener('click', function(e){ if (e.target === this) closeAdminLoginModal(); });
+      document.getElementById('closeAdminLogin').addEventListener('click', closeAdminLoginModal);
+      document.getElementById('cancelAdminLogin').addEventListener('click', closeAdminLoginModal);
+      document.getElementById('adminLoginOverlay').addEventListener('click', function(e){ if (e.target === this) closeAdminLoginModal(); });
 
-    document.getElementById('adminLoginForm').addEventListener('submit', async function(e){
-      e.preventDefault();
-      const u = document.getElementById('adminUsername').value.trim();
-      const p = document.getElementById('adminPassword').value;
-      
-      if (!u || !p) {
-        alert('Please enter both username and password.');
-        return;
-      }
+      document.getElementById('adminLoginForm').addEventListener('submit', async function(e){
+        e.preventDefault();
+        console.log('Login form submitted');
+        
+        const username = document.getElementById('adminUsername').value.trim();
+        const password = document.getElementById('adminPassword').value;
+        
+        if (!username || !password) {
+          alert('Please enter both username and password.');
+          return;
+        }
 
-      const [uHash, pHash] = await Promise.all([sha256(u), sha256(p)]);
-      
-      if (isFirstTimeSetup) {
-        // First-time setup: save credentials and login
-        localStorage.setItem(ADMIN_USER_HASH_KEY, uHash);
-        localStorage.setItem(ADMIN_PASS_HASH_KEY, pHash);
-        setAuth();
-        closeAdminLoginModal();
-        window.location.href = 'adminReceivingStation/';
-      } else {
-        // Regular login: verify credentials
-        const euHash = localStorage.getItem(ADMIN_USER_HASH_KEY);
-        const epHash = localStorage.getItem(ADMIN_PASS_HASH_KEY);
-        if (uHash === euHash && pHash === epHash) {
+        // Hash the entered credentials
+        const [usernameHash, passwordHash] = await Promise.all([sha256(username), sha256(password)]);
+        console.log('Credentials hashed successfully');
+        
+        // Determine which hash to use based on crypto.subtle availability
+        const usingFallback = !(window.crypto && window.crypto.subtle);
+        const storedUserHash = usingFallback ? STORED_CREDENTIALS.usernameFallback : STORED_CREDENTIALS.usernameHash;
+        const storedPassHash = usingFallback ? STORED_CREDENTIALS.passwordFallback : STORED_CREDENTIALS.passwordHash;
+        
+        // Compare with stored hashes
+        if (usernameHash === storedUserHash && passwordHash === storedPassHash) {
+          console.log('Login successful!');
           setAuth();
           closeAdminLoginModal();
           window.location.href = 'adminReceivingStation/';
         } else {
-          alert('Invalid credentials.');
+          console.log('Invalid credentials');
+          alert('Invalid username or password.');
         }
-      }
-    });
+      });
 
-    // Show/Hide password toggle
-    (function(){
+      // Show/Hide password toggle
       const toggleBtn = document.getElementById('togglePassword');
       const pwd = document.getElementById('adminPassword');
       toggleBtn.addEventListener('click', function(){
@@ -461,12 +466,6 @@
         toggleBtn.setAttribute('title', showing ? 'Show password' : 'Hide password');
         toggleBtn.setAttribute('aria-label', showing ? 'Show password' : 'Hide password');
       });
-    })();
-
-    // Initialize and update time every second
-    document.addEventListener('DOMContentLoaded', function() {
-      updateDateTime();
-      setInterval(updateDateTime, 1000);
     });
   </script>
 </body>

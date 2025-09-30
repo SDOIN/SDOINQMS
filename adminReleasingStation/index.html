@@ -3,7 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>SDOIN Queueing Management System - Releasing Station Monitor</title>
+  <title>SDOIN QMS - Releasing Station Monitor</title>
+  <link rel="icon" type="image/png" href="../images/SDOINLogo.png" />
   <link rel="stylesheet" href="../styles.css" />
   <script defer src="../script.js"></script>
   <style>
@@ -141,10 +142,10 @@
         const token = localStorage.getItem('admin_auth_token');
         const exp = parseInt(localStorage.getItem('admin_auth_exp') || '0', 10);
         if (!token || Date.now() >= exp) {
-          window.location.href = 'index.html';
+          window.location.href = '../';
         }
       } catch (e) {
-        window.location.href = 'index.html';
+        window.location.href = '../';
       }
     })();
     // Read from releasing queue storage
@@ -194,7 +195,7 @@
         localStorage.removeItem('admin_auth_token');
         localStorage.removeItem('admin_auth_exp');
       } catch (e) {}
-      window.location.href = 'index.html';
+      window.location.href = '../';
     });
 
     document.addEventListener('DOMContentLoaded', renderFromStorage);
