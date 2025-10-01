@@ -499,10 +499,15 @@ body {
 
 /* User Stations Mobile Responsive */
 @media (max-width: 768px) {
+  body {
+    overflow-y: auto !important;
+  }
+
   .main-content-section {
     flex-direction: column;
     overflow-y: auto !important;
     height: auto !important;
+    margin-top: 60px !important;
   }
 
   .left-section,
@@ -519,6 +524,7 @@ body {
   /* Logos section */
   .title-logos-section {
     order: 1;
+    padding: 20px 15px 15px 15px;
   }
 
   .logos {
@@ -535,12 +541,18 @@ body {
     height: 50px !important;
   }
 
+  .main-title {
+    text-align: center;
+  }
+
   .main-title h1 {
     font-size: 18px !important;
+    margin: 5px 0;
   }
 
   .main-title h2 {
     font-size: 14px !important;
+    margin: 5px 0;
   }
 
   /* Instructions section - HORIZONTAL LAYOUT */
