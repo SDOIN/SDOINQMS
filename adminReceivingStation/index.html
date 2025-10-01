@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="../images/SDOINLogo.png" />
   <link rel="stylesheet" href="../styles.css" />
   <script defer src="../script.js"></script>
+  <script type="module" src="../firebase-admin.js"></script>
   <style>
     /* Receiving Station Specific Styles */
     .receiving-station-container {
@@ -572,6 +573,16 @@
         renderFromStorage();
       });
     }
+  </script>
+
+  <!-- Initialize Firebase for this admin page -->
+  <script type="module">
+    // Initialize Firebase admin functionality
+    window.addEventListener('load', function() {
+      if (typeof window.initializeFirebaseAdmin === 'function') {
+        window.initializeFirebaseAdmin('receiving');
+      }
+    });
   </script>
 </body>
 </html>

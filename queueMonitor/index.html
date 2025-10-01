@@ -238,7 +238,10 @@
     </div>
   </div>
 
-  <script>
+  <script type="module">
+    // Import Firebase modules
+    import { database, ref, onValue } from '../firebase-config.js';
+
     // Function to update date/time
     function updateDateTime() {
       const now = new Date();
@@ -260,7 +263,7 @@
       document.getElementById('headerDateTime').textContent = `${dateString} | ${timeString}`;
     }
 
-    // Render queue numbers from localStorage (FIFO order)
+    // Render queue numbers from Firebase (FIFO order)
     function renderTickets(containerId, queueData, currentNumber, nextNumber) {
       const container = document.getElementById(containerId);
       container.innerHTML = '';
@@ -269,11 +272,8 @@
         return;
       }
 
-      // Sort by timestamp to maintain FIFO order (oldest first)
-      const sortedQueue = queueData.sort((a, b) => (a.createdAt || a.timestamp) - (b.createdAt || b.timestamp));
-
       // Filter out current and next queue numbers from pending display
-      const pendingQueue = sortedQueue.filter(item => {
+      const pendingQueue = queueData.filter(item => {
         const itemNumber = item.number || item.queueNumber;
         return itemNumber !== currentNumber && itemNumber !== nextNumber;
       });
@@ -309,66 +309,80 @@
       });
     }
 
-    // Update queue status with FIFO logic
-    function updateQueueStatus() {
-      // Get receiving queue
-      const receivingQueue = JSON.parse(localStorage.getItem('receiving_queue') || '[]');
-      const receivingPending = receivingQueue.filter(item => item.status === 'pending');
-      
-      // Get releasing queue
-      const releasingQueue = JSON.parse(localStorage.getItem('releasing_queue') || '[]');
-      const releasingPending = releasingQueue.filter(item => item.status === 'pending');
-
+    // Update queue status with FIFO logic from Firebase
+    function updateQueueFromFirebase(stationType, queueData) {
       // Sort by timestamp for FIFO (oldest first)
-      const sortedReceiving = receivingPending.sort((a, b) => (a.createdAt || a.timestamp) - (b.createdAt || b.timestamp));
-      const sortedReleasing = releasingPending.sort((a, b) => (a.createdAt || a.timestamp) - (b.createdAt || b.timestamp));
+      const sortedQueue = queueData.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
 
-      // Update receiving station (FIFO - first in, first out)
-      let recvCurrent = '--';
-      let recvNext = '--';
-      if (sortedReceiving.length > 0) {
-        recvCurrent = sortedReceiving[0].number || sortedReceiving[0].queueNumber;
-        recvNext = sortedReceiving.length > 1 ? (sortedReceiving[1].number || sortedReceiving[1].queueNumber) : '--';
+      if (stationType === 'receiving') {
+        // Update receiving station (FIFO - first in, first out)
+        let recvCurrent = '--';
+        let recvNext = '--';
+        if (sortedQueue.length > 0) {
+          recvCurrent = sortedQueue[0].number || sortedQueue[0].queueNumber;
+          recvNext = sortedQueue.length > 1 ? (sortedQueue[1].number || sortedQueue[1].queueNumber) : '--';
+        }
+        document.getElementById('recvOnQueue').textContent = recvCurrent;
+        document.getElementById('recvNext').textContent = recvNext;
+
+        // Render tickets (show pending tickets excluding current and next)
+        renderTickets('receivingTickets', sortedQueue, recvCurrent, recvNext);
+      } else if (stationType === 'releasing') {
+        // Update releasing station (FIFO - first in, first out)
+        let relCurrent = '--';
+        let relNext = '--';
+        if (sortedQueue.length > 0) {
+          relCurrent = sortedQueue[0].number || sortedQueue[0].queueNumber;
+          relNext = sortedQueue.length > 1 ? (sortedQueue[1].number || sortedQueue[1].queueNumber) : '--';
+        }
+        document.getElementById('relOnQueue').textContent = relCurrent;
+        document.getElementById('relNext').textContent = relNext;
+
+        // Render tickets (show pending tickets excluding current and next)
+        renderTickets('releasingTickets', sortedQueue, relCurrent, relNext);
       }
-      document.getElementById('recvOnQueue').textContent = recvCurrent;
-      document.getElementById('recvNext').textContent = recvNext;
-
-      // Update releasing station (FIFO - first in, first out)
-      let relCurrent = '--';
-      let relNext = '--';
-      if (sortedReleasing.length > 0) {
-        relCurrent = sortedReleasing[0].number || sortedReleasing[0].queueNumber;
-        relNext = sortedReleasing.length > 1 ? (sortedReleasing[1].number || sortedReleasing[1].queueNumber) : '--';
-      }
-      document.getElementById('relOnQueue').textContent = relCurrent;
-      document.getElementById('relNext').textContent = relNext;
-
-      // Render tickets (show pending tickets excluding current and next)
-      renderTickets('receivingTickets', sortedReceiving, recvCurrent, recvNext);
-      renderTickets('releasingTickets', sortedReleasing, relCurrent, relNext);
     }
 
-    // Initialize and update time every second
+    // Initialize Firebase real-time listeners
+    function initializeFirebaseListeners() {
+      // Listen to receiving queue
+      const receivingRef = ref(database, 'receiving_queue');
+      onValue(receivingRef, (snapshot) => {
+        const queueData = [];
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          Object.keys(data).forEach(key => {
+            if (data[key].status === 'pending') {
+              queueData.push({ ...data[key], firebaseKey: key });
+            }
+          });
+        }
+        updateQueueFromFirebase('receiving', queueData);
+      });
+
+      // Listen to releasing queue
+      const releasingRef = ref(database, 'releasing_queue');
+      onValue(releasingRef, (snapshot) => {
+        const queueData = [];
+        if (snapshot.exists()) {
+          const data = snapshot.val();
+          Object.keys(data).forEach(key => {
+            if (data[key].status === 'pending') {
+              queueData.push({ ...data[key], firebaseKey: key });
+            }
+          });
+        }
+        updateQueueFromFirebase('releasing', queueData);
+      });
+    }
+
+    // Initialize on DOM load
     document.addEventListener('DOMContentLoaded', function() {
       updateDateTime();
       setInterval(updateDateTime, 1000);
-      updateQueueStatus();
       
-      // Update queue status every 2 seconds
-      setInterval(updateQueueStatus, 2000);
-    });
-
-    // Listen for storage changes (when other tabs update queues)
-    window.addEventListener('storage', function(e) {
-      if (e.key === 'receiving_queue' || e.key === 'releasing_queue' || 
-          e.key === 'receiving_last_update' || e.key === 'releasing_last_update') {
-        updateQueueStatus();
-      }
-    });
-
-    // Also listen for custom events (for same-tab updates)
-    window.addEventListener('queueUpdated', function() {
-      updateQueueStatus();
+      // Initialize Firebase real-time listeners
+      initializeFirebaseListeners();
     });
   </script>
 </body>

@@ -7,6 +7,7 @@
   <link rel="icon" type="image/png" href="../images/SDOINLogo.png" />
   <link rel="stylesheet" href="../styles.css" />
   <script defer src="../script.js"></script>
+  <script type="module" src="../firebase-admin.js"></script>
   <style>
     /* Releasing Station Monitor - same layout as receiving */
     .receiving-station-container { display: flex; height: calc(100vh - 60px); overflow: hidden; margin-top: 10px; }
@@ -256,6 +257,16 @@
         renderFromStorage();
       });
     }
+  </script>
+
+  <!-- Initialize Firebase for this admin page -->
+  <script type="module">
+    // Initialize Firebase admin functionality
+    window.addEventListener('load', function() {
+      if (typeof window.initializeFirebaseAdmin === 'function') {
+        window.initializeFirebaseAdmin('releasing');
+      }
+    });
   </script>
 </body>
 </html>
