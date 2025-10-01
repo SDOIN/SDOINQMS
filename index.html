@@ -284,6 +284,40 @@
       margin: 0 5px;
       opacity: 0.6;
     }
+
+    /* Footer responsive */
+    .footer-desktop {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      width: 100%;
+    }
+
+    .footer-mobile {
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .footer {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+
+      .footer-desktop {
+        display: none;
+      }
+
+      .footer-mobile {
+        display: block;
+        text-align: center;
+        line-height: 1.8;
+      }
+
+      .footer-mobile div {
+        margin: 3px 0;
+      }
+    }
   </style>
 </head>
 <body>
@@ -346,10 +380,18 @@
 
   <!-- Footer -->
   <footer class="footer">
-    <div class="footer-left">Made with ❤️ and ☕</div>
-    <div class="footer-right">
+    <div class="footer-desktop">
+      <div class="footer-left">Made with ❤️ and ☕</div>
+      <div class="footer-right">
+        <div>Copyright © 2025 SDOIN</div>
+        <div>Developed By: P.K. Tagalicud, J.M. Queddeng, C.J. Baay, and <a href="https://www.facebook.com/https.jastrel.me/" target="_blank" style="color: rgba(255, 255, 255, 0.95); text-decoration: underline;">J. Acebu</a></div>
+      </div>
+    </div>
+    <div class="footer-mobile">
+      <div>Made with ❤️ and ☕</div>
       <div>Copyright © 2025 SDOIN</div>
-      <div>Developed By: P.K. Tagalicud, J.M. Queddeng, C.J. Baay, and <a href="https://www.facebook.com/https.jastrel.me/" target="_blank" style="color: rgba(255, 255, 255, 0.95); text-decoration: underline;">J. Acebu</a></div>
+      <div>Developed By: P.K. Tagalicud, J.M. Queddeng,</div>
+      <div>C.J. Baay, and <a href="https://www.facebook.com/https.jastrel.me/" target="_blank" style="color: rgba(255, 255, 255, 0.95); text-decoration: underline;">J. Acebu</a></div>
     </div>
   </footer>
 

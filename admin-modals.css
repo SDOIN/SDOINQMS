@@ -32,21 +32,21 @@
 }
 
 .view-btn {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #6c757d 0%, #495057 100%);
   color: white;
 }
 
 .view-btn:hover {
-  background: linear-gradient(135deg, #5568d3 0%, #5d3a82 100%);
+  background: linear-gradient(135deg, #5a6268 0%, #343a40 100%);
 }
 
 .done-btn {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  background: linear-gradient(135deg, #1e7e34 0%, #155724 100%);
   color: white;
 }
 
 .done-btn:hover {
-  background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
+  background: linear-gradient(135deg, #1c6d2e 0%, #0f4419 100%);
 }
 
 .cancel-btn {
@@ -107,35 +107,8 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 24px;
+  margin-bottom: 0px;
   position: relative;
-}
-
-.modal-icon {
-  width: 64px;
-  height: 64px;
-  border-radius: 50%;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 16px;
-}
-
-.modal-icon svg {
-  width: 32px;
-  height: 32px;
-}
-
-.modal-icon.view {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-}
-
-.modal-icon.success {
-  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
-}
-
-.modal-icon.danger {
-  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
 }
 
 .modal-close {
@@ -168,6 +141,8 @@
   font-weight: bold;
   color: #333;
   margin: 0;
+  margin-top: 12px;
+  margin-bottom: 24px;
   text-align: center;
 }
 
@@ -189,7 +164,7 @@
 
 .modal-queue-highlight {
   display: inline-block;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #ff8c00 0%, #ff6b00 100%);
   color: white;
   padding: 4px 12px;
   border-radius: 6px;
@@ -327,6 +302,144 @@
 
   .modal-btn {
     width: 100%;
+  }
+}
+
+/* ========================================
+   Admin Pages Mobile Responsive
+   ======================================== */
+
+@media (max-width: 768px) {
+  .receiving-station-container {
+    flex-direction: column !important;
+    height: auto !important;
+  }
+
+  .left-panel,
+  .right-panel {
+    width: 100% !important;
+    padding: 10px !important;
+  }
+
+  .left-panel {
+    order: 1;
+  }
+
+  /* Logo and title section */
+  .logo-title-section {
+    order: 1;
+    margin-bottom: 10px !important;
+  }
+
+  .logos {
+    gap: 10px !important;
+  }
+
+  .logo-image {
+    height: 35px !important;
+  }
+
+  .bagong-pilipinas-logo {
+    height: 45px !important;
+  }
+
+  .logo-title-section .system-title {
+    font-size: 16px !important;
+  }
+
+  .logo-title-section .system-subtitle {
+    font-size: 12px !important;
+  }
+
+  /* Queue monitoring section */
+  .queue-monitoring {
+    order: 2;
+    margin-bottom: 10px !important;
+  }
+
+  .queue-display {
+    padding: 10px !important;
+  }
+
+  .queue-label {
+    font-size: 12px !important;
+  }
+
+  .queue-number {
+    font-size: 24px !important;
+  }
+
+  /* Navigation section */
+  .navigation-section {
+    order: 3;
+    margin-bottom: 10px !important;
+  }
+
+  .nav-link {
+    font-size: 13px !important;
+    padding: 8px 12px !important;
+  }
+
+  /* Bottom info */
+  .bottom-info {
+    order: 4;
+    font-size: 11px !important;
+  }
+
+  /* Right panel - queue list */
+  .right-panel {
+    order: 5;
+  }
+
+  .station-header {
+    padding: 12px !important;
+  }
+
+  .station-title {
+    font-size: 18px !important;
+  }
+
+  .queue-list-container {
+    max-height: 400px !important;
+    padding: 10px !important;
+  }
+
+  .queue-item {
+    padding: 12px !important;
+    flex-wrap: wrap;
+  }
+
+  .queue-item-number {
+    font-size: 18px !important;
+    min-width: 40px !important;
+  }
+
+  .queue-item-title {
+    font-size: 13px !important;
+  }
+
+  .queue-item-tracking {
+    font-size: 11px !important;
+  }
+
+  .queue-item-status {
+    font-size: 11px !important;
+  }
+
+  .queue-item-actions {
+    width: 100%;
+    margin-top: 8px;
+    justify-content: center;
+  }
+
+  .action-btn {
+    width: 36px !important;
+    height: 36px !important;
+  }
+
+  .action-btn svg {
+    width: 16px;
+    height: 16px;
   }
 }
 

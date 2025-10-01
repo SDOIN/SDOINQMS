@@ -34,7 +34,7 @@
     .queue-display.next-queue .queue-number {
       color: #000;
     }
-    .bottom-info { margin-top: auto; text-align: center; color: #bbb; font-size: 12px; }
+    .bottom-info { margin-top: auto; text-align: center; color: #bbb; font-size: 13px; }
     .right-panel { width: 65%; background: #2c2c2c; display: flex; flex-direction: column; }
     .station-header { background: #2c2c2c; padding: 15px; text-align: center; }
     .station-title { font-size: 24px; font-weight: bold; color: white; text-transform: uppercase; letter-spacing: 2px; }
@@ -118,8 +118,7 @@
       </div>
 
       <div class="bottom-info">
-        <div>RECORDS OFFICE</div>
-        <div>SDOIN</div>
+        <div>Made with ❤️ and ☕</div>
       </div>
     </div>
 
@@ -131,9 +130,6 @@
 
       <div class="queue-list-container" id="queueList"></div>
 
-      <div class="station-footer">
-        <p>Made with ❤️ and ☕</p>
-      </div>
     </div>
   </div>
 
@@ -265,14 +261,6 @@
     <div class="modal-container">
       <div class="modal-header">
         <button class="modal-close" onclick="closeModal('viewModal')">&times;</button>
-      </div>
-      <div style="text-align: center; margin-bottom: 24px;">
-        <div class="modal-icon view">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="2">
-            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-            <circle cx="12" cy="12" r="3"></circle>
-          </svg>
-        </div>
         <h2 class="modal-title">Queue Details</h2>
       </div>
       
@@ -321,19 +309,12 @@
     <div class="modal-container">
       <div class="modal-header">
         <button class="modal-close" onclick="closeModal('doneModal')">&times;</button>
-      </div>
-      <div style="text-align: center; margin-bottom: 24px;">
-        <div class="modal-icon success">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
-            <polyline points="20 6 9 17 4 12"></polyline>
-          </svg>
-        </div>
         <h2 class="modal-title">Mark as Done?</h2>
       </div>
       
       <div class="modal-body">
         <p class="modal-message">
-          Are you sure you want to mark Queue <span class="modal-queue-highlight" id="doneQueueNumber">--</span> as done?
+          Are you sure you want to mark Queue <span class="modal-queue-highlight" id="doneQueueNumber">--</span> as done ?
           <br><br>
           This action will remove the queue from the list.
         </p>
@@ -356,20 +337,12 @@
     <div class="modal-container">
       <div class="modal-header">
         <button class="modal-close" onclick="closeModal('cancelModal')">&times;</button>
-      </div>
-      <div style="text-align: center; margin-bottom: 24px;">
-        <div class="modal-icon danger">
-          <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="white" stroke-width="3">
-            <line x1="18" y1="6" x2="6" y2="18"></line>
-            <line x1="6" y1="6" x2="18" y2="18"></line>
-          </svg>
-        </div>
         <h2 class="modal-title">Cancel Queue?</h2>
       </div>
       
       <div class="modal-body">
         <p class="modal-message">
-          Are you sure you want to cancel Queue <span class="modal-queue-highlight" id="cancelQueueNumber">--</span>?
+          Are you sure you want to cancel Queue <span class="modal-queue-highlight" id="cancelQueueNumber">--</span> ?
           <br><br>
           This action cannot be undone.
         </p>

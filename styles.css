@@ -441,3 +441,164 @@ body {
   font-size: 14px;
   text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.7);
 }
+
+/* ========================================
+   Mobile Responsive Styles
+   ======================================== */
+
+/* Header Responsive */
+@media (max-width: 768px) {
+  .top-bar {
+    flex-direction: row;
+    padding: 8px 10px;
+    gap: 10px;
+    text-align: center;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .system-title {
+    font-size: 10px !important;
+    text-align: left;
+    flex: 1;
+    line-height: 1.2;
+  }
+
+  .datetime {
+    font-size: 9px !important;
+    text-align: right;
+    white-space: nowrap;
+  }
+
+  /* Logout button container */
+  .top-bar > div[style*="display:flex"] {
+    flex-direction: row !important;
+    gap: 6px !important;
+    align-items: center;
+  }
+
+  #logoutBtn {
+    font-size: 9px !important;
+    padding: 4px 8px !important;
+    white-space: nowrap;
+  }
+
+  /* Header in admin pages */
+  .main-header {
+    padding: 8px 10px !important;
+  }
+
+  .header-title {
+    font-size: 10px !important;
+  }
+
+  .header-datetime {
+    font-size: 9px !important;
+  }
+}
+
+/* User Stations Mobile Responsive */
+@media (max-width: 768px) {
+  .main-content-section {
+    flex-direction: column;
+  }
+
+  .left-section,
+  .right-section {
+    width: 100% !important;
+    min-height: auto !important;
+  }
+
+  /* Logos section */
+  .title-logos-section {
+    order: 1;
+  }
+
+  .logos {
+    flex-wrap: wrap;
+    gap: 10px !important;
+  }
+
+  .logo-image {
+    height: 40px !important;
+  }
+
+  .bagong-pilipinas-logo {
+    height: 50px !important;
+  }
+
+  .main-title h1 {
+    font-size: 18px !important;
+  }
+
+  .main-title h2 {
+    font-size: 14px !important;
+  }
+
+  /* Instructions section */
+  .instructions {
+    order: 2;
+    padding: 15px !important;
+  }
+
+  .steps-horizontal {
+    flex-direction: column !important;
+    gap: 15px !important;
+  }
+
+  .step {
+    width: 100% !important;
+  }
+
+  .step-title {
+    font-size: 12px !important;
+  }
+
+  /* Station buttons */
+  .station-buttons {
+    order: 3;
+    flex-direction: column;
+    gap: 10px !important;
+    padding: 15px !important;
+  }
+
+  .station-btn {
+    width: 100% !important;
+    font-size: 14px !important;
+    padding: 12px !important;
+  }
+
+  /* Form panel */
+  .right-section {
+    order: 4;
+    padding: 20px 15px !important;
+  }
+
+  .form-panel h1 {
+    font-size: 20px !important;
+  }
+
+  .form-instruction {
+    font-size: 13px !important;
+  }
+
+  .form-group label {
+    font-size: 13px !important;
+  }
+
+  .form-group input {
+    font-size: 14px !important;
+  }
+
+  .add-to-queue-btn {
+    font-size: 14px !important;
+    padding: 12px !important;
+  }
+
+  /* Footer for mobile - stacked layout */
+  .footer {
+    font-size: 11px !important;
+    line-height: 1.8 !important;
+    padding: 15px 10px !important;
+  }
+}
