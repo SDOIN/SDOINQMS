@@ -501,12 +501,19 @@ body {
 @media (max-width: 768px) {
   .main-content-section {
     flex-direction: column;
+    overflow-y: auto !important;
+    height: auto !important;
   }
 
   .left-section,
   .right-section {
     width: 100% !important;
     min-height: auto !important;
+  }
+
+  .left-section {
+    display: flex;
+    flex-direction: column;
   }
 
   /* Logos section */
@@ -517,6 +524,7 @@ body {
   .logos {
     flex-wrap: wrap;
     gap: 10px !important;
+    justify-content: center;
   }
 
   .logo-image {
@@ -539,15 +547,20 @@ body {
   .instructions {
     order: 2;
     padding: 15px !important;
+    text-align: center;
+    display: flex;
+    justify-content: center;
   }
 
   .steps-horizontal {
     flex-direction: column !important;
     gap: 15px !important;
+    align-items: center;
   }
 
   .step {
     width: 100% !important;
+    max-width: 300px;
   }
 
   .step-title {

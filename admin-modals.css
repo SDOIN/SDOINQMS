@@ -313,6 +313,7 @@
   .receiving-station-container {
     flex-direction: column !important;
     height: auto !important;
+    overflow-y: auto !important;
   }
 
   .left-panel,
@@ -323,16 +324,20 @@
 
   .left-panel {
     order: 1;
+    display: flex;
+    flex-direction: column;
   }
 
   /* Logo and title section */
   .logo-title-section {
     order: 1;
     margin-bottom: 10px !important;
+    text-align: center;
   }
 
   .logos {
     gap: 10px !important;
+    justify-content: center;
   }
 
   .logo-image {
@@ -345,10 +350,12 @@
 
   .logo-title-section .system-title {
     font-size: 16px !important;
+    text-align: center !important;
   }
 
   .logo-title-section .system-subtitle {
     font-size: 12px !important;
+    text-align: center !important;
   }
 
   /* Queue monitoring section */
@@ -380,15 +387,16 @@
     padding: 8px 12px !important;
   }
 
-  /* Bottom info */
+  /* Bottom info - hide on mobile, will show after queue list */
   .bottom-info {
-    order: 4;
-    font-size: 11px !important;
+    display: none !important;
   }
 
   /* Right panel - queue list */
   .right-panel {
     order: 5;
+    position: relative;
+    padding-bottom: 50px !important;
   }
 
   .station-header {
@@ -400,8 +408,9 @@
   }
 
   .queue-list-container {
-    max-height: 400px !important;
+    max-height: none !important;
     padding: 10px !important;
+    margin-bottom: 40px !important;
   }
 
   .queue-item {
@@ -441,5 +450,22 @@
     width: 16px;
     height: 16px;
   }
+
+  /* Mobile footer for admin pages */
+  .admin-mobile-footer {
+    display: block !important;
+    text-align: center;
+    padding: 15px;
+    color: #bbb;
+    font-size: 11px;
+    background: rgba(44, 44, 44, 0.8);
+    border-radius: 8px;
+    margin-top: 10px;
+  }
+}
+
+/* Desktop: hide mobile footer */
+.admin-mobile-footer {
+  display: none;
 }
 
