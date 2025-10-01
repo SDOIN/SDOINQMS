@@ -68,9 +68,23 @@ function renderQueueList(queueArray, stationType) {
         <div class="queue-item-status">${statusLabel}</div>
       </div>
       <div class="queue-item-actions">
-        <button class="action-btn view-btn" onclick="viewQueueDetails('${item.firebaseKey}', '${stationType}')">👁</button>
-        <button class="action-btn done-btn" onclick="markAsDone('${item.firebaseKey}', '${stationType}')">✓</button>
-        <button class="action-btn cancel-btn" onclick="cancelQueue('${item.firebaseKey}', '${stationType}')">✗</button>
+        <button class="action-btn view-btn" onclick="viewQueueDetails('${item.firebaseKey}', '${item.number}', '${item.dts || 'N/A'}', '${statusLabel}', ${item.createdAt || 0}, '${stationType}')" title="View Details">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+        <button class="action-btn done-btn" onclick="showDoneModal('${item.firebaseKey}', '${item.number}', '${stationType}')" title="Mark as Done">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <polyline points="20 6 9 17 4 12"></polyline>
+          </svg>
+        </button>
+        <button class="action-btn cancel-btn" onclick="showCancelModal('${item.firebaseKey}', '${item.number}', '${stationType}')" title="Cancel Queue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
       </div>
     `;
     queueList.appendChild(div);
@@ -81,39 +95,66 @@ function renderQueueList(queueArray, stationType) {
   }
 }
 
-// View queue details
-window.viewQueueDetails = async function(firebaseKey, stationType) {
-  const queueRef = ref(database, `${stationType}_queue/${firebaseKey}`);
-  
-  onValue(queueRef, (snapshot) => {
-    if (snapshot.exists()) {
-      const item = snapshot.val();
-      showQueueModal(item);
-    }
-  }, { onlyOnce: true });
-};
-
-// Show modal with queue details
-function showQueueModal(item) {
-  const modal = document.getElementById('detailsModal');
+// View queue details - Show modal with all information
+window.viewQueueDetails = function(firebaseKey, queueNumber, dtsNumber, status, createdAt, stationType) {
+  const modal = document.getElementById('viewModal');
   if (!modal) return;
   
-  document.getElementById('detailQueueNumber').textContent = item.number || 'N/A';
-  document.getElementById('detailDTS').textContent = item.dts || 'N/A';
-  document.getElementById('detailStatus').textContent = (item.status || 'pending').toUpperCase();
-  document.getElementById('detailTimestamp').textContent = item.createdAt ? 
-    new Date(item.createdAt).toLocaleString() : 'N/A';
+  // Populate modal with queue details
+  document.getElementById('viewQueueNumber').textContent = queueNumber;
+  document.getElementById('viewDTS').textContent = dtsNumber;
+  document.getElementById('viewStatus').textContent = status;
+  document.getElementById('viewTimestamp').textContent = createdAt ? 
+    new Date(createdAt).toLocaleString('en-US', { 
+      year: 'numeric', 
+      month: 'short', 
+      day: '2-digit',
+      hour: '2-digit', 
+      minute: '2-digit',
+      second: '2-digit'
+    }) : 'N/A';
+  
+  // Store current queue info for actions
+  window.currentQueueKey = firebaseKey;
+  window.currentQueueNumber = queueNumber;
+  window.currentStationType = stationType;
   
   modal.classList.add('show');
-}
+};
 
-// Mark queue as done
-window.markAsDone = async function(firebaseKey, stationType) {
-  if (!confirm('Mark this queue as done?')) return;
+// Show Done Confirmation Modal
+window.showDoneModal = function(firebaseKey, queueNumber, stationType) {
+  const modal = document.getElementById('doneModal');
+  if (!modal) return;
   
+  document.getElementById('doneQueueNumber').textContent = queueNumber;
+  
+  window.currentQueueKey = firebaseKey;
+  window.currentStationType = stationType;
+  
+  modal.classList.add('show');
+};
+
+// Show Cancel Confirmation Modal
+window.showCancelModal = function(firebaseKey, queueNumber, stationType) {
+  const modal = document.getElementById('cancelModal');
+  if (!modal) return;
+  
+  document.getElementById('cancelQueueNumber').textContent = queueNumber;
+  
+  window.currentQueueKey = firebaseKey;
+  window.currentStationType = stationType;
+  
+  modal.classList.add('show');
+};
+
+// Mark queue as done (called from modal)
+window.confirmMarkDone = async function() {
   try {
-    const queueItemRef = ref(database, `${stationType}_queue/${firebaseKey}`);
+    const queueItemRef = ref(database, `${window.currentStationType}_queue/${window.currentQueueKey}`);
     await remove(queueItemRef);
+    closeModal('doneModal');
+    closeModal('viewModal');
     console.log('Queue marked as done and removed');
   } catch (error) {
     console.error('Error marking as done:', error);
@@ -121,13 +162,13 @@ window.markAsDone = async function(firebaseKey, stationType) {
   }
 };
 
-// Cancel queue
-window.cancelQueue = async function(firebaseKey, stationType) {
-  if (!confirm('Cancel this queue?')) return;
-  
+// Cancel queue (called from modal)
+window.confirmCancelQueue = async function() {
   try {
-    const queueItemRef = ref(database, `${stationType}_queue/${firebaseKey}`);
+    const queueItemRef = ref(database, `${window.currentStationType}_queue/${window.currentQueueKey}`);
     await remove(queueItemRef);
+    closeModal('cancelModal');
+    closeModal('viewModal');
     console.log('Queue cancelled and removed');
   } catch (error) {
     console.error('Error cancelling queue:', error);
@@ -135,9 +176,9 @@ window.cancelQueue = async function(firebaseKey, stationType) {
   }
 };
 
-// Close modal
-window.closeDetailsModal = function() {
-  const modal = document.getElementById('detailsModal');
+// Close any modal
+window.closeModal = function(modalId) {
+  const modal = document.getElementById(modalId);
   if (modal) {
     modal.classList.remove('show');
   }
@@ -145,14 +186,17 @@ window.closeDetailsModal = function() {
 
 // Initialize on DOM load
 document.addEventListener('DOMContentLoaded', function() {
-  // Close modal when clicking outside
-  const modal = document.getElementById('detailsModal');
-  if (modal) {
-    modal.addEventListener('click', function(e) {
-      if (e.target === this) {
-        closeDetailsModal();
-      }
-    });
-  }
+  // Close modals when clicking outside
+  const modals = ['viewModal', 'doneModal', 'cancelModal'];
+  modals.forEach(modalId => {
+    const modal = document.getElementById(modalId);
+    if (modal) {
+      modal.addEventListener('click', function(e) {
+        if (e.target === this) {
+          closeModal(modalId);
+        }
+      });
+    }
+  });
 });
 

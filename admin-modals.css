@@ -1,0 +1,332 @@
+/* ========================================
+   Professional Admin Button Styles
+   ======================================== */
+
+.queue-item-actions {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.action-btn {
+  width: 40px;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.action-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+}
+
+.action-btn:active {
+  transform: translateY(0);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.view-btn {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.view-btn:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #5d3a82 100%);
+}
+
+.done-btn {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+}
+
+.done-btn:hover {
+  background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
+}
+
+.cancel-btn {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.cancel-btn:hover {
+  background: linear-gradient(135deg, #bd2130 0%, #a71d2a 100%);
+}
+
+/* ========================================
+   Modal Overlay & Base Styles
+   ======================================== */
+
+.modal-overlay {
+  display: none;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
+  backdrop-filter: blur(5px);
+  z-index: 9999;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.modal-overlay.show {
+  display: flex;
+  opacity: 1;
+}
+
+.modal-container {
+  background: white;
+  border-radius: 16px;
+  padding: 32px;
+  max-width: 500px;
+  width: 90%;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+  transform: scale(0.9);
+  transition: transform 0.3s ease;
+  position: relative;
+}
+
+.modal-overlay.show .modal-container {
+  transform: scale(1);
+}
+
+/* ========================================
+   Modal Header
+   ======================================== */
+
+.modal-header {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 24px;
+  position: relative;
+}
+
+.modal-icon {
+  width: 64px;
+  height: 64px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 16px;
+}
+
+.modal-icon svg {
+  width: 32px;
+  height: 32px;
+}
+
+.modal-icon.view {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+}
+
+.modal-icon.success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+}
+
+.modal-icon.danger {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+}
+
+.modal-close {
+  position: absolute;
+  top: -8px;
+  right: -8px;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: #f8f9fa;
+  border-radius: 50%;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.3s ease;
+  color: #666;
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.modal-close:hover {
+  background: #e9ecef;
+  color: #333;
+  transform: rotate(90deg);
+}
+
+.modal-title {
+  font-size: 24px;
+  font-weight: bold;
+  color: #333;
+  margin: 0;
+  text-align: center;
+}
+
+/* ========================================
+   Modal Body
+   ======================================== */
+
+.modal-body {
+  margin-bottom: 24px;
+}
+
+.modal-message {
+  text-align: center;
+  color: #666;
+  font-size: 16px;
+  margin-bottom: 24px;
+  line-height: 1.5;
+}
+
+.modal-queue-highlight {
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-weight: bold;
+  font-size: 18px;
+}
+
+.modal-details {
+  background: #f8f9fa;
+  border-radius: 12px;
+  padding: 20px;
+  margin-bottom: 16px;
+}
+
+.detail-row {
+  display: flex;
+  justify-content: space-between;
+  padding: 12px 0;
+  border-bottom: 1px solid #e9ecef;
+}
+
+.detail-row:last-child {
+  border-bottom: none;
+}
+
+.detail-label {
+  font-weight: 600;
+  color: #666;
+  font-size: 14px;
+}
+
+.detail-value {
+  font-weight: bold;
+  color: #333;
+  font-size: 14px;
+  text-align: right;
+}
+
+.detail-value.status {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+  padding: 4px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+}
+
+/* ========================================
+   Modal Footer / Actions
+   ======================================== */
+
+.modal-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 24px;
+}
+
+.modal-btn {
+  padding: 12px 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  min-width: 120px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.modal-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+.modal-btn:active {
+  transform: translateY(0);
+}
+
+.modal-btn-primary {
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+}
+
+.modal-btn-primary:hover {
+  background: linear-gradient(135deg, #5568d3 0%, #5d3a82 100%);
+}
+
+.modal-btn-success {
+  background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+  color: white;
+}
+
+.modal-btn-success:hover {
+  background: linear-gradient(135deg, #218838 0%, #1aa179 100%);
+}
+
+.modal-btn-danger {
+  background: linear-gradient(135deg, #dc3545 0%, #c82333 100%);
+  color: white;
+}
+
+.modal-btn-danger:hover {
+  background: linear-gradient(135deg, #bd2130 0%, #a71d2a 100%);
+}
+
+.modal-btn-secondary {
+  background: #6c757d;
+  color: white;
+}
+
+.modal-btn-secondary:hover {
+  background: #5a6268;
+}
+
+/* ========================================
+   Responsive Design
+   ======================================== */
+
+@media (max-width: 600px) {
+  .modal-container {
+    padding: 24px;
+    width: 95%;
+  }
+
+  .modal-title {
+    font-size: 20px;
+  }
+
+  .modal-actions {
+    flex-direction: column;
+  }
+
+  .modal-btn {
+    width: 100%;
+  }
+}
+
