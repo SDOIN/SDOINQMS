@@ -543,28 +543,62 @@ body {
     font-size: 14px !important;
   }
 
-  /* Instructions section */
+  /* Instructions section - HORIZONTAL LAYOUT */
   .instructions {
     order: 2;
-    padding: 15px !important;
+    padding: 15px 10px !important;
     text-align: center;
     display: flex;
     justify-content: center;
+    width: 100% !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
   }
 
   .steps-horizontal {
-    flex-direction: column !important;
-    gap: 15px !important;
-    align-items: center;
+    flex-direction: row !important;
+    gap: 8px !important;
+    align-items: flex-start !important;
+    width: 100% !important;
+    justify-content: space-between !important;
   }
 
   .step {
-    width: 100% !important;
-    max-width: 300px;
+    width: 32% !important;
+    max-width: none !important;
+    flex: 1 !important;
+  }
+
+  .step-visual {
+    transform: scale(0.75) !important;
+    margin-bottom: 6px !important;
   }
 
   .step-title {
-    font-size: 12px !important;
+    font-size: 9px !important;
+    line-height: 1.3 !important;
+  }
+
+  /* Shrink icon elements */
+  .card-icon, 
+  .input-icon, 
+  .screen-icon {
+    padding: 12px !important;
+  }
+
+  .card-number, 
+  .screen-number {
+    font-size: 24px !important;
+  }
+
+  .card-label, 
+  .screen-label {
+    font-size: 9px !important;
+  }
+
+  .input-field {
+    font-size: 9px !important;
+    padding: 4px !important;
   }
 
   /* Station buttons */
