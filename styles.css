@@ -507,7 +507,7 @@ body {
     flex-direction: column;
     overflow-y: auto !important;
     height: auto !important;
-    margin-top: 80px !important;
+    margin-top: 50px !important;
   }
 
   .left-section,
@@ -524,7 +524,7 @@ body {
   /* Logos section */
   .title-logos-section {
     order: 1;
-    padding: 30px 15px 15px 15px;
+    padding: 5px 15px 10px 15px;
   }
 
   .logos {
