@@ -2,6 +2,52 @@
    Professional Admin Button Styles
    ======================================== */
 
+/* Inline control wrapper (keeps existing layout) */
+.queue-control {
+  display: flex;
+  justify-content: flex-start;
+  margin: 0 0 12px 0;
+}
+
+/* Primary control button styling */
+.control-btn.next-customer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 10px;
+  background: linear-gradient(135deg, #6c63ff 0%, #3f37c9 100%);
+  color: #ffffff;
+  font-weight: 700;
+  font-size: 14px;
+  box-shadow: 0 6px 14px rgba(63, 55, 201, 0.25);
+  cursor: pointer;
+  transition: transform 0.15s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.control-btn.next-customer-btn:hover:not(:disabled) {
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(63, 55, 201, 0.3);
+}
+
+.control-btn.next-customer-btn:active:not(:disabled) {
+  transform: translateY(0);
+}
+
+.control-btn.next-customer-btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.control-btn .btn-icon {
+  font-size: 16px;
+}
+
+.control-btn .btn-text {
+  letter-spacing: 0.3px;
+}
+
 .queue-item-actions {
   display: flex;
   gap: 8px;

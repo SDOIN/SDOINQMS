@@ -2,57 +2,140 @@
 // Firebase Admin Panel Integration
 // Handles real-time queue management for admin pages
 // =============================
-import { database, ref, onValue, update, remove } from './firebase-config.js';
+import { database, ref, onValue, update, remove, set } from './firebase-config.js';
 
 // Initialize Firebase listeners for queue management
 window.initializeFirebaseAdmin = function(stationType) {
   const queueRef = ref(database, `${stationType}_queue`);
-  
+  const stateRef = ref(database, `${stationType}_state`);
+
+  let latestQueue = [];
+  let latestState = { serving: null, next: null };
+
+  const safeRender = () => {
+    renderQueueList(latestQueue, stationType, latestState);
+    ensureInitialNext(stationType, latestQueue, latestState);
+  };
+
   // Real-time listener for queue updates
   onValue(queueRef, (snapshot) => {
     if (snapshot.exists()) {
       const data = snapshot.val();
-      const queueArray = Object.keys(data).map(key => ({
-        firebaseKey: key,
-        ...data[key]
-      }));
-      renderQueueList(queueArray, stationType);
+      latestQueue = Object.keys(data).map(key => ({ firebaseKey: key, ...data[key] }));
     } else {
-      renderQueueList([], stationType);
+      latestQueue = [];
     }
+    safeRender();
+  });
+
+  // Real-time listener for admin control state
+  onValue(stateRef, (snapshot) => {
+    latestState = snapshot.exists() ? (snapshot.val() || {}) : {};
+    latestState.serving = latestState.serving || null;
+    latestState.next = latestState.next || null;
+    safeRender();
   });
 };
 
+// Admin: Call Next Customer → promote next to serving; fill next from oldest pending
+window.adminCallNext = async function(stationType) {
+  const queueRef = ref(database, `${stationType}_queue`);
+  const stateRef = ref(database, `${stationType}_state`);
+
+  // Read queue once
+  let pending = [];
+  await new Promise(resolve => onValue(queueRef, (snap) => {
+    if (snap.exists()) {
+      const data = snap.val();
+      pending = Object.keys(data)
+        .map(k => ({ firebaseKey: k, ...data[k] }))
+        .filter(i => (i.status || 'pending') === 'pending')
+        .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    }
+    resolve();
+  }, { onlyOnce: true }));
+
+  // Read state once
+  let currentState = {};
+  await new Promise(resolve => onValue(stateRef, (snap) => { currentState = snap.val() || {}; resolve(); }, { onlyOnce: true }));
+
+  const nextKey = currentState.next?.firebaseKey || currentState.next || null;
+  if (!nextKey) return;
+
+  // Promote next to serving
+  await set(ref(database, `${stationType}_state/serving`), nextKey);
+
+  // Choose new next from oldest pending excluding the one now serving
+  const newNext = pending.find(p => p.firebaseKey !== nextKey) || null;
+  await set(ref(database, `${stationType}_state/next`), newNext ? newNext.firebaseKey : null);
+};
+
+// Ensure initial NEXT is populated when empty and queue has items
+async function ensureInitialNext(stationType, queueArray, controlState = {}) {
+  const hasServing = !!(controlState.serving);
+  const hasNext = !!(controlState.next);
+  if (hasNext || hasServing) return;
+  const pending = queueArray
+    .filter(i => (i.status || 'pending') === 'pending')
+    .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  if (pending.length === 0) return;
+  const first = pending[0];
+  try {
+    await set(ref(database, `${stationType}_state/next`), first.firebaseKey);
+  } catch {}
+}
+
 // Render queue list from Firebase data
-function renderQueueList(queueArray, stationType) {
+function renderQueueList(queueArray, stationType, controlState = {}) {
   const queueList = document.getElementById('queueList');
   if (!queueList) return;
   
   queueList.innerHTML = '';
-  
+  const stateServingKey = controlState.serving?.firebaseKey || controlState.serving || null;
+  const stateNextKey = controlState.next?.firebaseKey || controlState.next || null;
+
   // Filter and sort pending items by creation time (FIFO)
   const pending = queueArray
-    .filter(i => i.status === 'pending')
+    .filter(i => (i.status || 'pending') === 'pending')
     .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-  
+
+  const servingItem = stateServingKey ? pending.find(p => p.firebaseKey === stateServingKey) : null;
+  const nextItem = stateNextKey ? pending.find(p => p.firebaseKey === stateNextKey) : null;
+
   // Update current and next queue displays
-  const current = pending[0]?.number || '00';
-  const next = pending[1]?.number || '00';
+  const current = servingItem?.number || '00';
+  const next = nextItem?.number || '00';
   
   const currentQueueEl = document.getElementById('currentQueue');
   const nextQueueEl = document.getElementById('nextQueue');
   if (currentQueueEl) currentQueueEl.textContent = current;
   if (nextQueueEl) nextQueueEl.textContent = next;
   
+  // Minimal control button (no style change)
+  const control = document.createElement('div');
+  control.innerHTML = `
+    <div class="queue-control">
+      <button id="callNextBtn" class="control-btn next-customer-btn" title="Call Next Customer">
+        <span class="btn-icon">📢</span>
+        <span class="btn-text">Call Next Customer</span>
+      </button>
+    </div>
+  `;
+  queueList.appendChild(control);
+  const callNextBtn = control.querySelector('#callNextBtn');
+  if (callNextBtn) {
+    callNextBtn.disabled = !nextItem;
+    callNextBtn.addEventListener('click', () => window.adminCallNext && window.adminCallNext(stationType));
+  }
+
   // Render each queue item
   pending.forEach((item, idx) => {
     let statusLabel = 'Pending';
     let dataStatus = 'pending';
-    
-    if (idx === 0) {
+    if (servingItem && item.firebaseKey === servingItem.firebaseKey) {
       statusLabel = 'On Queue';
       dataStatus = 'on-queue';
-    } else if (idx === 1) {
+    } else if (nextItem && item.firebaseKey === nextItem.firebaseKey) {
       statusLabel = 'Next Queue';
       dataStatus = 'next-queue';
     }

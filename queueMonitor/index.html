@@ -227,6 +227,32 @@
         gap: 8px;
       }
     }
+
+    /* Extra-small devices: tighten header text sizes */
+    @media (max-width: 480px) {
+      .main-header {
+        padding: 6px 8px;
+      }
+      .header-title {
+        font-size: 9px;
+        letter-spacing: 0.5px;
+        white-space: nowrap;
+      }
+      .header-datetime {
+        font-size: 8px;
+        white-space: nowrap;
+      }
+    }
+
+    @media (max-width: 360px) {
+      .header-title {
+        font-size: 8px;
+        letter-spacing: 0.3px;
+      }
+      .header-datetime {
+        font-size: 7px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -304,7 +330,7 @@
       document.getElementById('headerDateTime').textContent = `${dateString} | ${timeString}`;
     }
 
-    // Render queue numbers from Firebase (FIFO order)
+    // Render queue numbers from Firebase (excluding serving/next)
     function renderTickets(containerId, queueData, currentNumber, nextNumber) {
       const container = document.getElementById(containerId);
       container.innerHTML = '';
@@ -350,70 +376,65 @@
       });
     }
 
-    // Update queue status with FIFO logic from Firebase
-    function updateQueueFromFirebase(stationType, queueData) {
-      // Sort by timestamp for FIFO (oldest first)
-      const sortedQueue = queueData.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    // Manual-control aware monitor: reads <station>_queue and <station>_state
+    const caches = {
+      receiving: { list: [], byKey: {}, state: { serving: null, next: null } },
+      releasing: { list: [], byKey: {}, state: { serving: null, next: null } }
+    };
 
-      if (stationType === 'receiving') {
-        // Update receiving station (FIFO - first in, first out)
-        let recvCurrent = '--';
-        let recvNext = '--';
-        if (sortedQueue.length > 0) {
-          recvCurrent = sortedQueue[0].number || sortedQueue[0].queueNumber;
-          recvNext = sortedQueue.length > 1 ? (sortedQueue[1].number || sortedQueue[1].queueNumber) : '--';
-        }
-        document.getElementById('recvOnQueue').textContent = recvCurrent;
-        document.getElementById('recvNext').textContent = recvNext;
+    function renderStation(station) {
+      const { list, byKey, state } = caches[station];
+      const servingKey = state.serving?.firebaseKey || state.serving || null;
+      const nextKey = state.next?.firebaseKey || state.next || null;
 
-        // Render tickets (show pending tickets excluding current and next)
-        renderTickets('receivingTickets', sortedQueue, recvCurrent, recvNext);
-      } else if (stationType === 'releasing') {
-        // Update releasing station (FIFO - first in, first out)
-        let relCurrent = '--';
-        let relNext = '--';
-        if (sortedQueue.length > 0) {
-          relCurrent = sortedQueue[0].number || sortedQueue[0].queueNumber;
-          relNext = sortedQueue.length > 1 ? (sortedQueue[1].number || sortedQueue[1].queueNumber) : '--';
-        }
-        document.getElementById('relOnQueue').textContent = relCurrent;
-        document.getElementById('relNext').textContent = relNext;
+      const servingItem = servingKey ? byKey[servingKey] : null;
+      const nextItem = nextKey ? byKey[nextKey] : null;
 
-        // Render tickets (show pending tickets excluding current and next)
-        renderTickets('releasingTickets', sortedQueue, relCurrent, relNext);
+      const currentNum = servingItem?.number || servingItem?.queueNumber || '--';
+      const nextNum = nextItem?.number || nextItem?.queueNumber || '--';
+
+      if (station === 'receiving') {
+        document.getElementById('recvOnQueue').textContent = currentNum || '--';
+        document.getElementById('recvNext').textContent = nextNum || '--';
+        const pending = list.filter(i => i.firebaseKey !== servingKey && i.firebaseKey !== nextKey);
+        renderTickets('receivingTickets', pending, currentNum, nextNum);
+      } else {
+        document.getElementById('relOnQueue').textContent = currentNum || '--';
+        document.getElementById('relNext').textContent = nextNum || '--';
+        const pending = list.filter(i => i.firebaseKey !== servingKey && i.firebaseKey !== nextKey);
+        renderTickets('releasingTickets', pending, currentNum, nextNum);
       }
     }
 
-    // Initialize Firebase real-time listeners
     function initializeFirebaseListeners() {
-      // Listen to receiving queue
-      const receivingRef = ref(database, 'receiving_queue');
-      onValue(receivingRef, (snapshot) => {
-        const queueData = [];
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          Object.keys(data).forEach(key => {
-            if (data[key].status === 'pending') {
-              queueData.push({ ...data[key], firebaseKey: key });
-            }
-          });
-        }
-        updateQueueFromFirebase('receiving', queueData);
-      });
+      ['receiving', 'releasing'].forEach((station) => {
+        const qRef = ref(database, `${station}_queue`);
+        const sRef = ref(database, `${station}_state`);
 
-      // Listen to releasing queue
-      const releasingRef = ref(database, 'releasing_queue');
-      onValue(releasingRef, (snapshot) => {
-        const queueData = [];
-        if (snapshot.exists()) {
-          const data = snapshot.val();
-          Object.keys(data).forEach(key => {
-            if (data[key].status === 'pending') {
-              queueData.push({ ...data[key], firebaseKey: key });
-            }
-          });
-        }
-        updateQueueFromFirebase('releasing', queueData);
+        onValue(qRef, (snapshot) => {
+          const list = [];
+          const map = {};
+          if (snapshot.exists()) {
+            const data = snapshot.val();
+            Object.keys(data).forEach(key => {
+              const item = { ...data[key], firebaseKey: key };
+              if ((item.status || 'pending') === 'pending') {
+                list.push(item);
+                map[key] = item;
+              }
+            });
+            list.sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+          }
+          caches[station].list = list;
+          caches[station].byKey = map;
+          renderStation(station);
+        });
+
+        onValue(sRef, (snapshot) => {
+          const st = snapshot.exists() ? (snapshot.val() || {}) : {};
+          caches[station].state = { serving: st.serving || null, next: st.next || null };
+          renderStation(station);
+        });
       });
     }
 
