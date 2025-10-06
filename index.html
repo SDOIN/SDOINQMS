@@ -44,6 +44,155 @@
       }
     }
 
+    /* ========================================
+       Splash Screen Styles
+       ======================================== */
+    
+    .splash-screen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(rgba(0, 0, 0, 0.85), rgba(0, 0, 0, 0.85)), url('images/SDOINBackground.jpg');
+      background-size: cover;
+      background-position: center;
+      background-attachment: fixed;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 99999;
+      animation: splashFadeIn 0.8s ease-in-out;
+    }
+
+    .splash-content {
+      text-align: center;
+      color: white;
+      max-width: 500px;
+      padding: 40px 20px;
+    }
+
+    .splash-logo-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 30px;
+      margin-bottom: 30px;
+      flex-wrap: wrap;
+    }
+
+    .splash-logo {
+      height: 80px;
+      width: auto;
+      animation: logoFloat 2s ease-in-out infinite alternate;
+    }
+
+    .splash-logo:nth-child(2) {
+      animation-delay: 0.5s;
+    }
+
+    .splash-title {
+      font-size: 28px;
+      font-weight: bold;
+      margin-bottom: 10px;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      animation: titleSlideIn 1s ease-out 0.5s both;
+    }
+
+    .splash-subtitle {
+      font-size: 16px;
+      color: #ccc;
+      margin-bottom: 40px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      animation: titleSlideIn 1s ease-out 0.7s both;
+    }
+
+    .splash-spinner {
+      margin-bottom: 20px;
+      animation: spinnerFadeIn 1s ease-out 1s both;
+    }
+
+    .splash-message {
+      font-size: 16px;
+      color: #aaa;
+      animation: messageFadeIn 1s ease-out 1.2s both;
+    }
+
+    @keyframes splashFadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    @keyframes logoFloat {
+      from {
+        transform: translateY(0px);
+      }
+      to {
+        transform: translateY(-10px);
+      }
+    }
+
+    @keyframes titleSlideIn {
+      from {
+        opacity: 0;
+        transform: translateY(30px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    @keyframes spinnerFadeIn {
+      from {
+        opacity: 0;
+        transform: scale(0.8);
+      }
+      to {
+        opacity: 1;
+        transform: scale(1);
+      }
+    }
+
+    @keyframes messageFadeIn {
+      from {
+        opacity: 0;
+      }
+      to {
+        opacity: 1;
+      }
+    }
+
+    /* Mobile responsive splash screen */
+    @media (max-width: 768px) {
+      .splash-logo-container {
+        gap: 20px;
+      }
+      
+      .splash-logo {
+        height: 60px;
+      }
+      
+      .splash-title {
+        font-size: 20px;
+        letter-spacing: 1px;
+      }
+      
+      .splash-subtitle {
+        font-size: 14px;
+      }
+      
+      .splash-content {
+        padding: 20px 15px;
+      }
+    }
+
     /* Main Banner */
     .main-banner {
       background: rgba(255, 255, 255, 0.95);
@@ -493,10 +642,107 @@
       document.getElementById('adminLoginForm').reset();
     }
 
+    // Show branded splash screen
+    function showSplashScreen() {
+      const splashOverlay = document.createElement('div');
+      splashOverlay.id = 'splashScreen';
+      splashOverlay.className = 'splash-screen';
+      
+      splashOverlay.innerHTML = `
+        <div class="splash-content">
+          <div class="splash-logo-container">
+            <img src="images/SDOINLogo.png" alt="SDOIN Logo" class="splash-logo">
+            <img src="images/DEPEDLogo.png" alt="DEPED Logo" class="splash-logo">
+          </div>
+          <div class="splash-title">SDOIN Queuing Management System</div>
+          <div class="splash-subtitle">Schools Division Office of Iloilo Norte</div>
+          <div class="splash-spinner">
+            <div class="circular-spinner">
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+            </div>
+          </div>
+          <div class="splash-message">Initializing system...</div>
+        </div>
+      `;
+      
+      document.body.appendChild(splashOverlay);
+      
+      // Hide splash screen after 2.5 seconds
+      setTimeout(() => {
+        const splash = document.getElementById('splashScreen');
+        if (splash) {
+          splash.style.opacity = '0';
+          splash.style.transition = 'opacity 0.5s ease-out';
+          setTimeout(() => {
+            splash.remove();
+          }, 500);
+        }
+      }, 2500);
+    }
+
     // Initialize and update time every second
     document.addEventListener('DOMContentLoaded', function() {
-      updateDateTime();
-      setInterval(updateDateTime, 1000);
+      // Show splash screen first
+      showSplashScreen();
+      
+      // Initialize system after splash
+      setTimeout(() => {
+        updateDateTime();
+        setInterval(updateDateTime, 1000);
+      }, 500);
+
+      // Fullscreen loading functions
+      function showFullscreenLoading(message = 'Loading...') {
+        // Remove existing loading if any
+        const existingLoading = document.getElementById('fullscreenLoading');
+        if (existingLoading) {
+          existingLoading.remove();
+        }
+
+        const loadingOverlay = document.createElement('div');
+        loadingOverlay.id = 'fullscreenLoading';
+        loadingOverlay.className = 'fullscreen-loading';
+        
+        loadingOverlay.innerHTML = `
+          <div class="loading-content">
+            <div class="circular-spinner">
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+              <div class="spinner-dot"></div>
+            </div>
+            <div class="loading-message">${message}</div>
+          </div>
+        `;
+        
+        document.body.appendChild(loadingOverlay);
+      }
+
+      function hideFullscreenLoading() {
+        const loadingOverlay = document.getElementById('fullscreenLoading');
+        if (loadingOverlay) {
+          loadingOverlay.remove();
+        }
+      }
 
       // Wire up admin login
       document.getElementById('openAdminLogin').addEventListener('click', function() {
@@ -523,24 +769,35 @@
           return;
         }
 
-        // Hash the entered credentials
-        const [usernameHash, passwordHash] = await Promise.all([sha256(username), sha256(password)]);
-        console.log('Credentials hashed successfully');
+        // Show loading
+        showFullscreenLoading('Authenticating...');
         
-        // Determine which hash to use based on crypto.subtle availability
-        const usingFallback = !(window.crypto && window.crypto.subtle);
-        const storedUserHash = usingFallback ? STORED_CREDENTIALS.usernameFallback : STORED_CREDENTIALS.usernameHash;
-        const storedPassHash = usingFallback ? STORED_CREDENTIALS.passwordFallback : STORED_CREDENTIALS.passwordHash;
-        
-        // Compare with stored hashes
-        if (usernameHash === storedUserHash && passwordHash === storedPassHash) {
-          console.log('Login successful!');
-          setAuth();
-          closeAdminLoginModal();
-          window.location.href = 'adminReceivingStation/';
-        } else {
-          console.log('Invalid credentials');
-          alert('Invalid username or password.');
+        try {
+          // Hash the entered credentials
+          const [usernameHash, passwordHash] = await Promise.all([sha256(username), sha256(password)]);
+          console.log('Credentials hashed successfully');
+          
+          // Determine which hash to use based on crypto.subtle availability
+          const usingFallback = !(window.crypto && window.crypto.subtle);
+          const storedUserHash = usingFallback ? STORED_CREDENTIALS.usernameFallback : STORED_CREDENTIALS.usernameHash;
+          const storedPassHash = usingFallback ? STORED_CREDENTIALS.passwordFallback : STORED_CREDENTIALS.passwordHash;
+          
+          // Compare with stored hashes
+          if (usernameHash === storedUserHash && passwordHash === storedPassHash) {
+            console.log('Login successful!');
+            setAuth();
+            closeAdminLoginModal();
+            hideFullscreenLoading();
+            window.location.href = 'adminReceivingStation/';
+          } else {
+            console.log('Invalid credentials');
+            hideFullscreenLoading();
+            alert('Invalid username or password.');
+          }
+        } catch (error) {
+          hideFullscreenLoading();
+          console.error('Login error:', error);
+          alert('Login failed. Please try again.');
         }
       });
 

@@ -11,8 +11,15 @@ window.initializeFirebaseAdmin = function(stationType) {
 
   let latestQueue = [];
   let latestState = { serving: null, next: null };
+  let hasLoadedData = false;
+
+  // Show skeleton loading initially
+  showSkeletonLoading();
 
   const safeRender = () => {
+    if (!hasLoadedData) {
+      hasLoadedData = true;
+    }
     renderQueueList(latestQueue, stationType, latestState);
     ensureInitialNext(stationType, latestQueue, latestState);
   };
@@ -85,6 +92,100 @@ async function ensureInitialNext(stationType, queueArray, controlState = {}) {
   } catch {}
 }
 
+// Show fullscreen loading with circular spinner
+function showFullscreenLoading(message = 'Loading...') {
+  // Remove existing loading if any
+  const existingLoading = document.getElementById('fullscreenLoading');
+  if (existingLoading) {
+    existingLoading.remove();
+  }
+
+  const loadingOverlay = document.createElement('div');
+  loadingOverlay.id = 'fullscreenLoading';
+  loadingOverlay.className = 'fullscreen-loading';
+  
+  loadingOverlay.innerHTML = `
+    <div class="loading-content">
+      <div class="circular-spinner">
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+        <div class="spinner-dot"></div>
+      </div>
+      <div class="loading-message">${message}</div>
+    </div>
+  `;
+  
+  document.body.appendChild(loadingOverlay);
+}
+
+// Hide fullscreen loading
+function hideFullscreenLoading() {
+  const loadingOverlay = document.getElementById('fullscreenLoading');
+  if (loadingOverlay) {
+    loadingOverlay.remove();
+  }
+}
+
+// Show skeleton loading
+function showSkeletonLoading() {
+  const queueList = document.getElementById('queueList');
+  if (!queueList) return;
+  
+  queueList.innerHTML = `
+    <div class="skeleton-control">
+      <div class="skeleton-button"></div>
+    </div>
+    <div class="skeleton-item">
+      <div class="skeleton-number"></div>
+      <div class="skeleton-content">
+        <div class="skeleton-title"></div>
+        <div class="skeleton-dts"></div>
+        <div class="skeleton-status"></div>
+      </div>
+      <div class="skeleton-actions">
+        <div class="skeleton-btn"></div>
+        <div class="skeleton-btn"></div>
+        <div class="skeleton-btn"></div>
+      </div>
+    </div>
+    <div class="skeleton-item">
+      <div class="skeleton-number"></div>
+      <div class="skeleton-content">
+        <div class="skeleton-title"></div>
+        <div class="skeleton-dts"></div>
+        <div class="skeleton-status"></div>
+      </div>
+      <div class="skeleton-actions">
+        <div class="skeleton-btn"></div>
+        <div class="skeleton-btn"></div>
+        <div class="skeleton-btn"></div>
+      </div>
+    </div>
+    <div class="skeleton-item">
+      <div class="skeleton-number"></div>
+      <div class="skeleton-content">
+        <div class="skeleton-title"></div>
+        <div class="skeleton-dts"></div>
+        <div class="skeleton-status"></div>
+      </div>
+      <div class="skeleton-actions">
+        <div class="skeleton-btn"></div>
+        <div class="skeleton-btn"></div>
+        <div class="skeleton-btn"></div>
+      </div>
+    </div>
+  `;
+}
+
 // Render queue list from Firebase data
 function renderQueueList(queueArray, stationType, controlState = {}) {
   const queueList = document.getElementById('queueList');
@@ -130,27 +231,27 @@ function renderQueueList(queueArray, stationType, controlState = {}) {
 
   // Render each queue item
   pending.forEach((item, idx) => {
-    let statusLabel = 'Pending';
-    let dataStatus = 'pending';
+    let statusLabel = 'Waiting';
+    let dataStatus = 'waiting';
+    let isOnQueue = false;
+    let isNextQueue = false;
+    
     if (servingItem && item.firebaseKey === servingItem.firebaseKey) {
       statusLabel = 'On Queue';
       dataStatus = 'on-queue';
+      isOnQueue = true;
     } else if (nextItem && item.firebaseKey === nextItem.firebaseKey) {
       statusLabel = 'Next Queue';
       dataStatus = 'next-queue';
+      isNextQueue = true;
     }
     
-    const div = document.createElement('div');
-    div.className = 'queue-item';
-    div.setAttribute('data-status', dataStatus);
-    div.innerHTML = `
-      <div class="queue-item-number">${item.number}</div>
-      <div class="queue-item-content">
-        <div class="queue-item-title">Queue #${item.number}</div>
-        <div class="queue-item-tracking">DTS: ${item.dts || 'N/A'}</div>
-        <div class="queue-item-status">${statusLabel}</div>
-      </div>
-      <div class="queue-item-actions">
+    // Determine which buttons to show based on status
+    let actionButtons = '';
+    
+    if (isOnQueue) {
+      // ON QUEUE: Show View, Mark as Done, and Cancel buttons
+      actionButtons = `
         <button class="action-btn view-btn" onclick="viewQueueDetails('${item.firebaseKey}', '${item.number}', '${item.dts || 'N/A'}', '${statusLabel}', ${item.createdAt || 0}, '${stationType}')" title="View Details">
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
             <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
@@ -168,6 +269,37 @@ function renderQueueList(queueArray, stationType, controlState = {}) {
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
+      `;
+    } else {
+      // NEXT QUEUE and WAITING: Show only View and Cancel buttons
+      actionButtons = `
+        <button class="action-btn view-btn" onclick="viewQueueDetails('${item.firebaseKey}', '${item.number}', '${item.dts || 'N/A'}', '${statusLabel}', ${item.createdAt || 0}, '${stationType}')" title="View Details">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+            <circle cx="12" cy="12" r="3"></circle>
+          </svg>
+        </button>
+        <button class="action-btn cancel-btn" onclick="showCancelModal('${item.firebaseKey}', '${item.number}', '${stationType}')" title="Cancel Queue">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+            <line x1="18" y1="6" x2="6" y2="18"></line>
+            <line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+      `;
+    }
+    
+    const div = document.createElement('div');
+    div.className = 'queue-item';
+    div.setAttribute('data-status', dataStatus);
+    div.innerHTML = `
+      <div class="queue-item-number">${item.number}</div>
+      <div class="queue-item-content">
+        <div class="queue-item-title">Queue #${item.number}</div>
+        <div class="queue-item-tracking">DTS: ${item.dts || 'N/A'}</div>
+        <div class="queue-item-status">${statusLabel}</div>
+      </div>
+      <div class="queue-item-actions">
+        ${actionButtons}
       </div>
     `;
     queueList.appendChild(div);
@@ -234,12 +366,15 @@ window.showCancelModal = function(firebaseKey, queueNumber, stationType) {
 // Mark queue as done (called from modal)
 window.confirmMarkDone = async function() {
   try {
+    showFullscreenLoading('Processing...');
     const queueItemRef = ref(database, `${window.currentStationType}_queue/${window.currentQueueKey}`);
     await remove(queueItemRef);
     closeModal('doneModal');
     closeModal('viewModal');
+    hideFullscreenLoading();
     console.log('Queue marked as done and removed');
   } catch (error) {
+    hideFullscreenLoading();
     console.error('Error marking as done:', error);
     alert('Failed to mark as done. Please try again.');
   }
@@ -248,12 +383,15 @@ window.confirmMarkDone = async function() {
 // Cancel queue (called from modal)
 window.confirmCancelQueue = async function() {
   try {
+    showFullscreenLoading('Cancelling...');
     const queueItemRef = ref(database, `${window.currentStationType}_queue/${window.currentQueueKey}`);
     await remove(queueItemRef);
     closeModal('cancelModal');
     closeModal('viewModal');
+    hideFullscreenLoading();
     console.log('Queue cancelled and removed');
   } catch (error) {
+    hideFullscreenLoading();
     console.error('Error cancelling queue:', error);
     alert('Failed to cancel queue. Please try again.');
   }
