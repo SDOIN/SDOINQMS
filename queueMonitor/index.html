@@ -418,7 +418,7 @@
             const data = snapshot.val();
             Object.keys(data).forEach(key => {
               const item = { ...data[key], firebaseKey: key };
-              if ((item.status || 'pending') === 'pending') {
+              if ((item.status || 'waiting') === 'waiting') {
                 list.push(item);
                 map[key] = item;
               }

@@ -50,13 +50,13 @@ window.adminCallNext = async function(stationType) {
   const stateRef = ref(database, `${stationType}_state`);
 
   // Read queue once
-  let pending = [];
+  let waiting = [];
   await new Promise(resolve => onValue(queueRef, (snap) => {
     if (snap.exists()) {
       const data = snap.val();
-      pending = Object.keys(data)
+      waiting = Object.keys(data)
         .map(k => ({ firebaseKey: k, ...data[k] }))
-        .filter(i => (i.status || 'pending') === 'pending')
+        .filter(i => (i.status || 'waiting') === 'waiting')
         .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     }
     resolve();
@@ -72,8 +72,8 @@ window.adminCallNext = async function(stationType) {
   // Promote next to serving
   await set(ref(database, `${stationType}_state/serving`), nextKey);
 
-  // Choose new next from oldest pending excluding the one now serving
-  const newNext = pending.find(p => p.firebaseKey !== nextKey) || null;
+  // Choose new next from oldest waiting excluding the one now serving
+  const newNext = waiting.find(p => p.firebaseKey !== nextKey) || null;
   await set(ref(database, `${stationType}_state/next`), newNext ? newNext.firebaseKey : null);
 };
 
@@ -82,11 +82,11 @@ async function ensureInitialNext(stationType, queueArray, controlState = {}) {
   const hasServing = !!(controlState.serving);
   const hasNext = !!(controlState.next);
   if (hasNext || hasServing) return;
-  const pending = queueArray
-    .filter(i => (i.status || 'pending') === 'pending')
+  const waiting = queueArray
+    .filter(i => (i.status || 'waiting') === 'waiting')
     .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
-  if (pending.length === 0) return;
-  const first = pending[0];
+  if (waiting.length === 0) return;
+  const first = waiting[0];
   try {
     await set(ref(database, `${stationType}_state/next`), first.firebaseKey);
   } catch {}
@@ -195,13 +195,13 @@ function renderQueueList(queueArray, stationType, controlState = {}) {
   const stateServingKey = controlState.serving?.firebaseKey || controlState.serving || null;
   const stateNextKey = controlState.next?.firebaseKey || controlState.next || null;
 
-  // Filter and sort pending items by creation time (FIFO)
-  const pending = queueArray
-    .filter(i => (i.status || 'pending') === 'pending')
+  // Filter and sort waiting items by creation time (FIFO)
+  const waiting = queueArray
+    .filter(i => (i.status || 'waiting') === 'waiting')
     .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
 
-  const servingItem = stateServingKey ? pending.find(p => p.firebaseKey === stateServingKey) : null;
-  const nextItem = stateNextKey ? pending.find(p => p.firebaseKey === stateNextKey) : null;
+  const servingItem = stateServingKey ? waiting.find(p => p.firebaseKey === stateServingKey) : null;
+  const nextItem = stateNextKey ? waiting.find(p => p.firebaseKey === stateNextKey) : null;
 
   // Update current and next queue displays
   const current = servingItem?.number || '00';
@@ -230,7 +230,7 @@ function renderQueueList(queueArray, stationType, controlState = {}) {
   }
 
   // Render each queue item
-  pending.forEach((item, idx) => {
+  waiting.forEach((item, idx) => {
     let statusLabel = 'Waiting';
     let dataStatus = 'waiting';
     let isOnQueue = false;
@@ -305,8 +305,8 @@ function renderQueueList(queueArray, stationType, controlState = {}) {
     queueList.appendChild(div);
   });
   
-  if (pending.length === 0) {
-    queueList.innerHTML = '<div style="text-align:center; color:#999; padding:40px;">No pending queues</div>';
+  if (waiting.length === 0) {
+    queueList.innerHTML = '<div style="text-align:center; color:#999; padding:40px;">No waiting queues</div>';
   }
 }
 
@@ -328,6 +328,16 @@ window.viewQueueDetails = function(firebaseKey, queueNumber, dtsNumber, status, 
       minute: '2-digit',
       second: '2-digit'
     }) : 'N/A';
+  
+  // Show/hide Mark as Done button based on status
+  const markDoneBtn = modal.querySelector('.modal-btn-success');
+  if (markDoneBtn) {
+    if (status === 'On Queue') {
+      markDoneBtn.style.display = 'inline-flex';
+    } else {
+      markDoneBtn.style.display = 'none';
+    }
+  }
   
   // Store current queue info for actions
   window.currentQueueKey = firebaseKey;
@@ -369,6 +379,31 @@ window.confirmMarkDone = async function() {
     showFullscreenLoading('Processing...');
     const queueItemRef = ref(database, `${window.currentStationType}_queue/${window.currentQueueKey}`);
     await remove(queueItemRef);
+    
+    // Auto-advance first waiting to next if no next/serving customer
+    const stateRef = ref(database, `${window.currentStationType}_state`);
+    const queueRef = ref(database, `${window.currentStationType}_queue`);
+    
+    // Read current state
+    const stateSnapshot = await new Promise(resolve => onValue(stateRef, resolve, { onlyOnce: true }));
+    const currentState = stateSnapshot.exists() ? stateSnapshot.val() : {};
+    
+    // Read waiting queues
+    const queueSnapshot = await new Promise(resolve => onValue(queueRef, resolve, { onlyOnce: true }));
+    let waiting = [];
+    if (queueSnapshot.exists()) {
+      const data = queueSnapshot.val();
+      waiting = Object.keys(data)
+        .map(k => ({ firebaseKey: k, ...data[k] }))
+        .filter(i => (i.status || 'waiting') === 'waiting')
+        .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    }
+    
+    // If no next customer and there are waiting customers, advance first waiting to next
+    if (!currentState.next && waiting.length > 0) {
+      await set(ref(database, `${window.currentStationType}_state/next`), waiting[0].firebaseKey);
+    }
+    
     closeModal('doneModal');
     closeModal('viewModal');
     hideFullscreenLoading();
@@ -386,6 +421,31 @@ window.confirmCancelQueue = async function() {
     showFullscreenLoading('Cancelling...');
     const queueItemRef = ref(database, `${window.currentStationType}_queue/${window.currentQueueKey}`);
     await remove(queueItemRef);
+    
+    // Auto-advance first waiting to next if no next/serving customer
+    const stateRef = ref(database, `${window.currentStationType}_state`);
+    const queueRef = ref(database, `${window.currentStationType}_queue`);
+    
+    // Read current state
+    const stateSnapshot = await new Promise(resolve => onValue(stateRef, resolve, { onlyOnce: true }));
+    const currentState = stateSnapshot.exists() ? stateSnapshot.val() : {};
+    
+    // Read waiting queues
+    const queueSnapshot = await new Promise(resolve => onValue(queueRef, resolve, { onlyOnce: true }));
+    let waiting = [];
+    if (queueSnapshot.exists()) {
+      const data = queueSnapshot.val();
+      waiting = Object.keys(data)
+        .map(k => ({ firebaseKey: k, ...data[k] }))
+        .filter(i => (i.status || 'waiting') === 'waiting')
+        .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+    }
+    
+    // If no next customer and there are waiting customers, advance first waiting to next
+    if (!currentState.next && waiting.length > 0) {
+      await set(ref(database, `${window.currentStationType}_state/next`), waiting[0].firebaseKey);
+    }
+    
     closeModal('cancelModal');
     closeModal('viewModal');
     hideFullscreenLoading();
