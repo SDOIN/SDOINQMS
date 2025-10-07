@@ -1,23 +1,23 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <!DOCTYPE html>
+    <html lang="en">
+    <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SDOIN QMS - Queue Monitor</title>
   <link rel="icon" type="image/png" href="../images/SDOINLogo.png" />
-  <style>
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
-    }
+    <style>
+        * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+        }
 
-    body {
-      font-family: 'Arial', sans-serif;
+        body {
+        font-family: 'Arial', sans-serif;
       background: linear-gradient(rgba(0, 0, 0, 0.4), rgba(0, 0, 0, 0.4)), url('../images/SDOINBackground.jpg');
-      background-size: cover;
-      background-position: center;
-      background-attachment: fixed;
+        background-size: cover;
+        background-position: center;
+        background-attachment: fixed;
       color: white;
       height: 100vh;
       overflow: hidden;
@@ -49,24 +49,24 @@
     .header-datetime {
       font-size: 14px;
       font-weight: bold;
-      color: white;
-    }
+        color: white;
+        }
 
     /* Main Container */
     .container {
       height: calc(100vh - 48px);
       padding: 20px;
-      display: flex;
-      gap: 20px;
-    }
+        display: flex;
+        gap: 20px;
+        }
 
     /* Station Column */
     .station {
-      flex: 1;
-      display: flex;
-      flex-direction: column;
-      gap: 15px;
-    }
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        gap: 15px;
+        }
 
     /* Station Header */
     .station-header {
@@ -75,9 +75,9 @@
       text-align: center;
       border-radius: 8px;
       font-size: 24px;
-      font-weight: bold;
+        font-weight: bold;
       letter-spacing: 3px;
-      text-transform: uppercase;
+        text-transform: uppercase;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
     }
 
@@ -86,7 +86,7 @@
       display: grid;
       grid-template-columns: repeat(auto-fit, minmax(80px, 1fr));
       gap: 10px;
-      flex: 1;
+        flex: 1;
       overflow: hidden;
       padding: 5px;
       align-content: start;
@@ -101,13 +101,13 @@
       background: rgba(44, 44, 44, 0.95);
       padding: 15px 10px;
       text-align: center;
-      border-radius: 8px;
+        border-radius: 8px;
       font-size: 28px;
-      font-weight: bold;
+        font-weight: bold;
       box-shadow: 0 4px 10px rgba(0, 0, 0, 0.5);
-      display: flex;
-      align-items: center;
-      justify-content: center;
+        display: flex;
+        align-items: center;
+        justify-content: center;
       min-height: 60px;
       height: fit-content;
     }
@@ -180,9 +180,9 @@
       
       .queue-grid {
         grid-template-columns: repeat(3, 1fr);
-      }
-      
-      .status-number {
+        }
+
+        .status-number {
         font-size: 36px;
       }
     }
@@ -190,13 +190,13 @@
     @media (max-width: 768px) {
       .main-header {
         padding: 8px 10px;
-      }
+        }
 
-      .header-title {
+        .header-title {
         font-size: 10px;
-      }
+        }
 
-      .header-datetime {
+        .header-datetime {
         font-size: 9px;
       }
 
@@ -252,80 +252,80 @@
       .header-datetime {
         font-size: 7px;
       }
-    }
-  </style>
-</head>
-<body>
-  <!-- Header -->
+        }
+    </style>
+    </head>
+    <body>
+    <!-- Header -->
   <header class="main-header">
     <div class="header-title"><a href="../">SDOIN Queueing Management System</a></div>
     <div class="header-datetime" id="headerDateTime">Loading...</div>
-  </header>
+    </header>
 
   <!-- Main Container -->
   <div class="container">
-    <!-- Receiving Station -->
+        <!-- Receiving Station -->
     <div class="station receiving">
       <div class="station-header">RECEIVING STATION</div>
       
       <div class="status-panel">
         <div class="status-box on-queue">
-          <div class="status-label">ON QUEUE</div>
+                <div class="status-label">ON QUEUE</div>
           <div class="status-number" id="recvOnQueue">--</div>
-        </div>
+            </div>
         <div class="status-box next-queue">
-          <div class="status-label">NEXT QUEUE</div>
+                <div class="status-label">NEXT QUEUE</div>
           <div class="status-number" id="recvNext">--</div>
+            </div>
         </div>
-      </div>
-
+        
       <div class="queue-grid" id="receivingTickets">
         <!-- Populated by JavaScript -->
-      </div>
-    </div>
+        </div>
+        </div>
 
-    <!-- Releasing Station -->
+        <!-- Releasing Station -->
     <div class="station releasing">
       <div class="station-header">RELEASING STATION</div>
       
       <div class="status-panel">
         <div class="status-box on-queue">
-          <div class="status-label">ON QUEUE</div>
+                <div class="status-label">ON QUEUE</div>
           <div class="status-number" id="relOnQueue">--</div>
-        </div>
+            </div>
         <div class="status-box next-queue">
-          <div class="status-label">NEXT QUEUE</div>
+                <div class="status-label">NEXT QUEUE</div>
           <div class="status-number" id="relNext">--</div>
+            </div>
         </div>
-      </div>
-
+        
       <div class="queue-grid" id="releasingTickets">
         <!-- Populated by JavaScript -->
-      </div>
+        </div>
+        </div>
     </div>
-  </div>
 
   <script type="module">
     // Import Firebase modules
     import { database, ref, onValue } from '../firebase-config.js';
 
-    // Function to update date/time
-    function updateDateTime() {
-      const now = new Date();
-      const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
-                      'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
-      const month = months[now.getMonth()];
-      const day = now.getDate().toString().padStart(2, '0');
-      const year = now.getFullYear();
+        // Function to update date/time
+        function updateDateTime() {
+        const now = new Date();
+        const months = ['JAN', 'FEB', 'MAR', 'APR', 'MAY', 'JUN',
+                        'JUL', 'AUG', 'SEP', 'OCT', 'NOV', 'DEC'];
+        const month = months[now.getMonth()];
+        const day = now.getDate().toString().padStart(2, '0');
+        const year = now.getFullYear();
 
-      let hours = now.getHours();
-      const minutes = now.getMinutes().toString().padStart(2, '0');
-      const seconds = now.getSeconds().toString().padStart(2, '0');
-      const ampm = hours >= 12 ? 'PM' : 'AM';
-      hours = (hours % 12 || 12).toString().padStart(2, '0');
+        let hours = now.getHours();
+        const minutes = now.getMinutes().toString().padStart(2, '0');
+        const seconds = now.getSeconds().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = (hours % 12 || 12).toString().padStart(2, '0');
 
-      const dateString = `${month} ${day}, ${year}`;
-      const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
+        const dateString = `${month} ${day}, ${year}`;
+        const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
 
       document.getElementById('headerDateTime').textContent = `${dateString} | ${timeString}`;
     }
@@ -440,12 +440,12 @@
 
     // Initialize on DOM load
     document.addEventListener('DOMContentLoaded', function() {
-      updateDateTime();
+        updateDateTime();
       setInterval(updateDateTime, 1000);
       
       // Initialize Firebase real-time listeners
       initializeFirebaseListeners();
     });
-  </script>
-</body>
-</html>
+    </script>
+    </body>
+    </html>
