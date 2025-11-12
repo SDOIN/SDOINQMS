@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload RFID Cards</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 600px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    button {
+      background: #4CAF50;
+      color: white;
+      padding: 15px 30px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      width: 100%;
+      margin-top: 20px;
+    }
+    button:hover:not(:disabled) {
+      background: #45a049;
+    }
+    button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+    #status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      display: none;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    pre {
+      background: #f8f9fa;
+      padding: 15px;
+      border-radius: 5px;
+      overflow-x: auto;
+      font-size: 14px;
+      border-left: 4px solid #4CAF50;
+    }
+    .note {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      padding: 12px;
+      border-radius: 5px;
+      margin-top: 20px;
+      color: #856404;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏷️ Upload RFID Cards to Firebase</h1>
+    <p>This will upload 10 RFID cards to your Firebase database.</p>
+    
+    <h3>RFID Cards to Upload:</h3>
+    <pre>Card 1: 2794137129 → Queue 1
+Card 2: 2849678651 → Queue 2
+Card 3: 3529797674 → Queue 3
+Card 4: 2841300123 → Queue 4
+Card 5: 3513088570 → Queue 5
+Card 6: 3509113386 → Queue 6
+Card 7: 3522872458 → Queue 7
+Card 8: 3520951354 → Queue 8
+Card 9: 3511216250 → Queue 9
+Card 10: 3504596458 → Queue 10</pre>
+
+    <button onclick="uploadRFIDCards()">Upload RFID Cards Now</button>
+    
+    <div id="status"></div>
+
+    <div class="note">
+      <strong>📌 Note:</strong> After successful upload, you can delete this file. You won't need it anymore.
+    </div>
+  </div>
+
+  <script type="module">
+    import { database, ref, set } from './firebase-config.js';
+
+    // Your RFID card mappings
+    const rfidCards = {
+      '2794137129': 1,
+      '2849678651': 2,
+      '3529797674': 3,
+      '2841300123': 4,
+      '3513088570': 5,
+      '3509113386': 6,
+      '3522872458': 7,
+      '3520951354': 8,
+      '3511216250': 9,
+      '3504596458': 10
+    };
+
+    function showStatus(message, type) {
+      const statusDiv = document.getElementById('status');
+      statusDiv.innerHTML = message;
+      statusDiv.className = type;
+      statusDiv.style.display = 'block';
+    }
+
+    // Make function globally available
+    window.uploadRFIDCards = async function() {
+      const button = event.target;
+      button.disabled = true;
+      button.textContent = 'Uploading...';
+      
+      showStatus('⏳ Starting upload...', 'info');
+
+      try {
+        let count = 0;
+        for (const [rfidId, queueNum] of Object.entries(rfidCards)) {
+          await set(ref(database, `rfid_cards/${rfidId}`), {
+            queueNumber: queueNum,
+            rfidId: rfidId,
+            createdAt: Date.now(),
+            lastUpdated: Date.now()
+          });
+          
+          count++;
+          showStatus(`⏳ Uploading... ${count}/10 cards uploaded`, 'info');
+          console.log(`✅ Uploaded: RFID ${rfidId} → Queue #${queueNum}`);
+        }
+
+        showStatus('🎉 SUCCESS! All 10 RFID cards uploaded to Firebase!<br><br>You can now:<br>1. Close this page<br>2. Delete upload-rfid.html file<br>3. Verify the data in Firebase Console', 'success');
+        button.textContent = '✅ Upload Complete!';
+        button.style.background = '#28a745';
+        console.log('All RFID cards uploaded successfully!');
+        
+      } catch (error) {
+        showStatus('❌ ERROR: ' + error.message + '<br><br>Please check:<br>1. Internet connection<br>2. Firebase configuration<br>3. Browser console (F12) for details', 'error');
+        button.disabled = false;
+        button.textContent = 'Try Again';
+        console.error('Upload error:', error);
+      }
+    };
+  </script>
+</body>
+</html>
+

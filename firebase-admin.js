@@ -78,18 +78,40 @@ window.adminCallNext = async function(stationType) {
 };
 
 // Ensure initial NEXT is populated when empty and queue has items
+let isSettingNext = false;
+
 async function ensureInitialNext(stationType, queueArray, controlState = {}) {
-  const hasServing = !!(controlState.serving);
+  // Prevent concurrent calls
+  if (isSettingNext) return;
+  
   const hasNext = !!(controlState.next);
-  if (hasNext || hasServing) return;
+  
+  // If there's already a next queue, we're good
+  if (hasNext) return;
+  
   const waiting = queueArray
     .filter(i => (i.status || 'waiting') === 'waiting')
     .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
+  
+  // No waiting queues, nothing to do
   if (waiting.length === 0) return;
-  const first = waiting[0];
+  
+  // Find first queue that's not currently serving
+  const servingKey = controlState.serving;
+  const first = waiting.find(q => q.firebaseKey !== servingKey);
+  
+  if (!first) return;
+  
+  isSettingNext = true;
   try {
+    console.log(`🔄 Auto-assigning NEXT queue: ${first.number} (${first.firebaseKey})`);
     await set(ref(database, `${stationType}_state/next`), first.firebaseKey);
-  } catch {}
+    console.log(`✅ Successfully set NEXT queue to: ${first.number}`);
+  } catch (error) {
+    console.error('❌ Error setting initial next:', error);
+  } finally {
+    isSettingNext = false;
+  }
 }
 
 // Show fullscreen loading with circular spinner
@@ -203,6 +225,16 @@ function renderQueueList(queueArray, stationType, controlState = {}) {
   const servingItem = stateServingKey ? waiting.find(p => p.firebaseKey === stateServingKey) : null;
   const nextItem = stateNextKey ? waiting.find(p => p.firebaseKey === stateNextKey) : null;
 
+  // Debug logging
+  console.log('📊 Queue State:', {
+    stateServingKey,
+    stateNextKey,
+    servingItem: servingItem ? servingItem.number : 'none',
+    nextItem: nextItem ? nextItem.number : 'none',
+    waitingCount: waiting.length,
+    waitingKeys: waiting.map(w => w.firebaseKey)
+  });
+
   // Update current and next queue displays
   const current = servingItem?.number || '00';
   const next = nextItem?.number || '00';
@@ -225,7 +257,10 @@ function renderQueueList(queueArray, stationType, controlState = {}) {
   queueList.appendChild(control);
   const callNextBtn = control.querySelector('#callNextBtn');
   if (callNextBtn) {
-    callNextBtn.disabled = !nextItem;
+    // Button should be enabled if there's a next key, regardless of whether we found the item
+    const shouldEnable = !!stateNextKey && waiting.length > 0;
+    callNextBtn.disabled = !shouldEnable;
+    console.log('🔘 Call Next Button:', shouldEnable ? 'ENABLED' : 'DISABLED', { hasNextKey: !!stateNextKey, waitingCount: waiting.length });
     callNextBtn.addEventListener('click', () => window.adminCallNext && window.adminCallNext(stationType));
   }
 
@@ -377,18 +412,19 @@ window.showCancelModal = function(firebaseKey, queueNumber, stationType) {
 window.confirmMarkDone = async function() {
   try {
     showFullscreenLoading('Processing...');
-    const queueItemRef = ref(database, `${window.currentStationType}_queue/${window.currentQueueKey}`);
-    await remove(queueItemRef);
+    const completedKey = window.currentQueueKey;
+    const queueItemRef = ref(database, `${window.currentStationType}_queue/${completedKey}`);
     
-    // Auto-advance first waiting to next if no next/serving customer
+    // Read current state BEFORE removing
     const stateRef = ref(database, `${window.currentStationType}_state`);
-    const queueRef = ref(database, `${window.currentStationType}_queue`);
-    
-    // Read current state
     const stateSnapshot = await new Promise(resolve => onValue(stateRef, resolve, { onlyOnce: true }));
     const currentState = stateSnapshot.exists() ? stateSnapshot.val() : {};
     
-    // Read waiting queues
+    // Remove the queue item
+    await remove(queueItemRef);
+    
+    // Read remaining waiting queues
+    const queueRef = ref(database, `${window.currentStationType}_queue`);
     const queueSnapshot = await new Promise(resolve => onValue(queueRef, resolve, { onlyOnce: true }));
     let waiting = [];
     if (queueSnapshot.exists()) {
@@ -399,15 +435,21 @@ window.confirmMarkDone = async function() {
         .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     }
     
-    // If no next customer and there are waiting customers, advance first waiting to next
-    if (!currentState.next && waiting.length > 0) {
-      await set(ref(database, `${window.currentStationType}_state/next`), waiting[0].firebaseKey);
+    // Clear serving but KEEP next queue as is
+    // Do NOT automatically promote next to serving
+    await set(ref(database, `${window.currentStationType}_state/serving`), null);
+    
+    // If next was the one we just removed, get a new next from waiting
+    if (currentState.next === completedKey) {
+      const newNext = waiting.length > 0 ? waiting[0].firebaseKey : null;
+      await set(ref(database, `${window.currentStationType}_state/next`), newNext);
     }
+    // Otherwise, keep the existing next queue unchanged
     
     closeModal('doneModal');
     closeModal('viewModal');
     hideFullscreenLoading();
-    console.log('Queue marked as done and removed');
+    console.log('✅ Queue marked as done. Next queue remains in position.');
   } catch (error) {
     hideFullscreenLoading();
     console.error('Error marking as done:', error);
@@ -419,18 +461,22 @@ window.confirmMarkDone = async function() {
 window.confirmCancelQueue = async function() {
   try {
     showFullscreenLoading('Cancelling...');
-    const queueItemRef = ref(database, `${window.currentStationType}_queue/${window.currentQueueKey}`);
-    await remove(queueItemRef);
+    const cancelledKey = window.currentQueueKey;
+    const queueItemRef = ref(database, `${window.currentStationType}_queue/${cancelledKey}`);
     
-    // Auto-advance first waiting to next if no next/serving customer
+    // Read current state BEFORE removing
     const stateRef = ref(database, `${window.currentStationType}_state`);
-    const queueRef = ref(database, `${window.currentStationType}_queue`);
-    
-    // Read current state
     const stateSnapshot = await new Promise(resolve => onValue(stateRef, resolve, { onlyOnce: true }));
     const currentState = stateSnapshot.exists() ? stateSnapshot.val() : {};
     
-    // Read waiting queues
+    const wasServing = currentState.serving === cancelledKey;
+    const wasNext = currentState.next === cancelledKey;
+    
+    // Remove the queue item
+    await remove(queueItemRef);
+    
+    // Read remaining waiting queues
+    const queueRef = ref(database, `${window.currentStationType}_queue`);
     const queueSnapshot = await new Promise(resolve => onValue(queueRef, resolve, { onlyOnce: true }));
     let waiting = [];
     if (queueSnapshot.exists()) {
@@ -441,15 +487,34 @@ window.confirmCancelQueue = async function() {
         .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     }
     
-    // If no next customer and there are waiting customers, advance first waiting to next
-    if (!currentState.next && waiting.length > 0) {
-      await set(ref(database, `${window.currentStationType}_state/next`), waiting[0].firebaseKey);
+    // Update state based on what was cancelled
+    if (wasServing) {
+      // Cancelled the serving queue (ON QUEUE)
+      // Clear serving but KEEP next queue in place
+      // Do NOT automatically promote next to serving
+      await set(ref(database, `${window.currentStationType}_state/serving`), null);
+      // Next queue stays in next position - no changes needed
+      console.log('✅ Cancelled ON QUEUE. Next queue remains in position.');
+    } else if (wasNext) {
+      // Cancelled the next queue - get new next from waiting
+      const newNext = waiting.find(q => q.firebaseKey !== currentState.serving);
+      await set(ref(database, `${window.currentStationType}_state/next`), newNext ? newNext.firebaseKey : null);
+      console.log('✅ Cancelled NEXT QUEUE. New next assigned from waiting list.');
+    } else {
+      // Cancelled a regular waiting queue
+      // Check if we need to assign next (if it was empty)
+      if (!currentState.next && waiting.length > 0) {
+        const newNext = waiting.find(q => q.firebaseKey !== currentState.serving);
+        if (newNext) {
+          await set(ref(database, `${window.currentStationType}_state/next`), newNext.firebaseKey);
+        }
+      }
+      console.log('✅ Cancelled waiting queue.');
     }
     
     closeModal('cancelModal');
     closeModal('viewModal');
     hideFullscreenLoading();
-    console.log('Queue cancelled and removed');
   } catch (error) {
     hideFullscreenLoading();
     console.error('Error cancelling queue:', error);
