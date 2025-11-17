@@ -1,0 +1,62 @@
+{
+  "2794137129": {
+    "createdAt": 1762916558015,
+    "lastUpdated": 1762916558015,
+    "queueNumber": 1,
+    "rfidId": "2794137129"
+  },
+  "2841300123": {
+    "createdAt": 1762916558521,
+    "lastUpdated": 1762916558521,
+    "queueNumber": 4,
+    "rfidId": "2841300123"
+  },
+  "2849678651": {
+    "createdAt": 1762916558571,
+    "lastUpdated": 1762916558571,
+    "queueNumber": 2,
+    "rfidId": "2849678651"
+  },
+  "3504596458": {
+    "createdAt": 1762916558625,
+    "lastUpdated": 1762916558625,
+    "queueNumber": 10,
+    "rfidId": "3504596458"
+  },
+  "3509113386": {
+    "createdAt": 1762916558674,
+    "lastUpdated": 1762916558674,
+    "queueNumber": 6,
+    "rfidId": "3509113386"
+  },
+  "3511216250": {
+    "createdAt": 1762916558724,
+    "lastUpdated": 1762916558724,
+    "queueNumber": 9,
+    "rfidId": "3511216250"
+  },
+  "3513088570": {
+    "createdAt": 1762916558774,
+    "lastUpdated": 1762916558774,
+    "queueNumber": 5,
+    "rfidId": "3513088570"
+  },
+  "3520951354": {
+    "createdAt": 1762916558845,
+    "lastUpdated": 1762916558845,
+    "queueNumber": 8,
+    "rfidId": "3520951354"
+  },
+  "3522872458": {
+    "createdAt": 1762916558895,
+    "lastUpdated": 1762916558895,
+    "queueNumber": 7,
+    "rfidId": "3522872458"
+  },
+  "3529797674": {
+    "createdAt": 1762916558945,
+    "lastUpdated": 1762916558945,
+    "queueNumber": 3,
+    "rfidId": "3529797674"
+  }
+}

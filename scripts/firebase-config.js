@@ -6,13 +6,13 @@ import { getDatabase, ref, set, push, onValue, update, remove, query, orderByChi
 
 // Your Firebase configuration
 const firebaseConfig = {
-  apiKey: "AIzaSyB-dlPoUqEjwgJgDnVP6zeB0n4PEFtuoY0",
-  authDomain: "sdoinqms.firebaseapp.com",
-  databaseURL: "https://sdoinqms-default-rtdb.asia-southeast1.firebasedatabase.app",
-  projectId: "sdoinqms",
-  storageBucket: "sdoinqms.firebasestorage.app",
-  messagingSenderId: "86692942325",
-  appId: "1:86692942325:web:0b7ba2f5385ff72e4dd0bc"
+  apiKey: "AIzaSyBmKiGvyq6H0Ym5BHXaOXePfgs5X_RF51A",
+  authDomain: "sdoinqms-1c17d.firebaseapp.com",
+  databaseURL: "https://sdoinqms-1c17d-default-rtdb.asia-southeast1.firebasedatabase.app",
+  projectId: "sdoinqms-1c17d",
+  storageBucket: "sdoinqms-1c17d.firebasestorage.app",
+  messagingSenderId: "750619920034",
+  appId: "1:750619920034:web:c84ceb2e5771f6d7e4b9fb"
 };
 
 // Initialize Firebase

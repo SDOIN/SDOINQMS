@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Upload RFID Cards</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 700px;
+      margin: 50px auto;
+      padding: 20px;
+      background: #f5f5f5;
+    }
+    .container {
+      background: white;
+      padding: 30px;
+      border-radius: 10px;
+      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    }
+    h1 {
+      color: #333;
+      margin-bottom: 10px;
+    }
+    .form-group {
+      margin-bottom: 20px;
+    }
+    label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: bold;
+      color: #555;
+    }
+    input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #ddd;
+      border-radius: 5px;
+      font-size: 16px;
+      box-sizing: border-box;
+    }
+    input:focus {
+      outline: none;
+      border-color: #4CAF50;
+    }
+    input[readonly] {
+      background: #f8f9fa;
+      cursor: pointer;
+    }
+    .button-group {
+      display: flex;
+      gap: 10px;
+      margin-top: 15px;
+    }
+    button {
+      flex: 1;
+      padding: 12px 20px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-size: 16px;
+      font-weight: bold;
+      transition: background 0.3s;
+    }
+    .btn-primary {
+      background: #4CAF50;
+      color: white;
+    }
+    .btn-primary:hover:not(:disabled) {
+      background: #45a049;
+    }
+    .btn-secondary {
+      background: #6c757d;
+      color: white;
+    }
+    .btn-secondary:hover:not(:disabled) {
+      background: #5a6268;
+    }
+    .btn-danger {
+      background: #dc3545;
+      color: white;
+    }
+    .btn-danger:hover:not(:disabled) {
+      background: #c82333;
+    }
+    button:disabled {
+      background: #cccccc;
+      cursor: not-allowed;
+    }
+    .cards-list {
+      margin-top: 30px;
+      border-top: 2px solid #eee;
+      padding-top: 20px;
+    }
+    .cards-list h3 {
+      margin-bottom: 15px;
+      color: #333;
+    }
+    .card-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px;
+      margin-bottom: 10px;
+      background: #f8f9fa;
+      border-radius: 5px;
+      border-left: 4px solid #4CAF50;
+    }
+    .card-info {
+      flex: 1;
+    }
+    .card-id {
+      font-weight: bold;
+      color: #333;
+      font-size: 16px;
+    }
+    .card-queue {
+      color: #666;
+      font-size: 14px;
+      margin-top: 4px;
+    }
+    .card-actions {
+      display: flex;
+      gap: 10px;
+    }
+    .btn-small {
+      padding: 6px 12px;
+      font-size: 14px;
+    }
+    #status {
+      margin-top: 20px;
+      padding: 15px;
+      border-radius: 5px;
+      display: none;
+    }
+    .success {
+      background: #d4edda;
+      color: #155724;
+      border: 1px solid #c3e6cb;
+    }
+    .error {
+      background: #f8d7da;
+      color: #721c24;
+      border: 1px solid #f5c6cb;
+    }
+    .info {
+      background: #d1ecf1;
+      color: #0c5460;
+      border: 1px solid #bee5eb;
+    }
+    .warning {
+      background: #fff3cd;
+      color: #856404;
+      border: 1px solid #ffc107;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 30px;
+      color: #999;
+      font-style: italic;
+    }
+    .note {
+      background: #e7f3ff;
+      border: 1px solid #b3d9ff;
+      padding: 12px;
+      border-radius: 5px;
+      margin-top: 20px;
+      color: #004085;
+      font-size: 14px;
+      line-height: 1.6;
+    }
+    .rfid-success {
+      border-color: #4CAF50 !important;
+      background: #f0fff4 !important;
+      animation: pulse 0.5s;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.02); }
+      100% { transform: scale(1); }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>🏷️ Add RFID Cards to Firebase</h1>
+    <p>Tap your RFID card on the reader or type the RFID ID, then enter the corresponding queue number.</p>
+    
+    <div class="form-group">
+      <label for="rfidInput">RFID Card ID</label>
+      <input 
+        type="text" 
+        id="rfidInput" 
+        placeholder="Tap RFID card here or type the ID" 
+        pattern="[0-9]+"
+        autofocus
+      />
+      <small style="color: #666; display: block; margin-top: 5px;">
+        💡 Tip: Tap the RFID card on the reader, or manually type the card ID
+      </small>
+    </div>
+
+    <div class="form-group">
+      <label for="queueInput">Queue Number</label>
+      <input 
+        type="number" 
+        id="queueInput" 
+        placeholder="Enter queue number (e.g., 1, 2, 3...)" 
+        min="1"
+      />
+    </div>
+
+    <div class="button-group">
+      <button class="btn-primary" onclick="addCard()">➕ Add Card</button>
+      <button class="btn-secondary" onclick="clearForm()">Clear</button>
+    </div>
+
+    <div class="cards-list" id="cardsList" style="display: none;">
+      <h3>📋 Cards to Upload (<span id="cardCount">0</span>)</h3>
+      <div id="cardsContainer"></div>
+      <div class="button-group" style="margin-top: 20px;">
+        <button class="btn-primary" onclick="uploadAllCards()" id="uploadBtn" disabled>
+          📤 Upload All Cards to Firebase
+        </button>
+        <button class="btn-danger" onclick="clearAllCards()">🗑️ Clear All</button>
+      </div>
+    </div>
+
+    <div id="status"></div>
+
+    <div class="note">
+      <strong>📌 Instructions:</strong><br>
+      1. Tap an RFID card on the reader (or type the ID manually)<br>
+      2. Enter the corresponding queue number<br>
+      3. Click "Add Card" to add it to the list<br>
+      4. Repeat for all RFID cards<br>
+      5. Click "Upload All Cards to Firebase" when done<br>
+      6. After successful upload, you can delete this file
+    </div>
+  </div>
+
+  <script type="module">
+    import { database, ref, set } from './scripts/firebase-config.js';
+
+    // Store cards to upload
+    let cardsToUpload = [];
+    let rfidBuffer = '';
+    let rfidTimeout;
+
+    const rfidInput = document.getElementById('rfidInput');
+    const queueInput = document.getElementById('queueInput');
+    const cardsContainer = document.getElementById('cardsContainer');
+    const cardsList = document.getElementById('cardsList');
+    const cardCount = document.getElementById('cardCount');
+    const uploadBtn = document.getElementById('uploadBtn');
+
+    // RFID Detection System (similar to user stations)
+    function detectRFID() {
+      let lastKeyTime = Date.now();
+      let isFastTyping = false;
+
+      document.addEventListener('keydown', function(e) {
+        // Ignore if user is typing in queue input
+        if (document.activeElement === queueInput) {
+          rfidBuffer = '';
+          return;
+        }
+
+        // Only process if RFID input is focused or no field is focused
+        const isRfidFocused = document.activeElement === rfidInput;
+        const isNoFieldFocused = document.activeElement === document.body;
+
+        if (isRfidFocused || isNoFieldFocused) {
+          const currentTime = Date.now();
+          const timeDiff = currentTime - lastKeyTime;
+          isFastTyping = timeDiff < 50; // RFID scanners type very fast
+          lastKeyTime = currentTime;
+
+          // Handle Enter key (RFID readers send Enter after card number)
+          if (e.key === 'Enter') {
+            if (rfidBuffer.length >= 8 && (isRfidFocused || isNoFieldFocused)) {
+              e.preventDefault();
+              rfidInput.value = rfidBuffer.trim();
+              rfidInput.classList.add('rfid-success');
+              setTimeout(() => {
+                rfidInput.classList.remove('rfid-success');
+              }, 600);
+              queueInput.focus();
+              rfidBuffer = '';
+            }
+            return;
+          }
+
+          // Build RFID buffer for fast typing
+          if (isRfidFocused || isNoFieldFocused) {
+            if (e.key.length === 1 && !e.ctrlKey && !e.metaKey && !e.altKey) {
+              rfidBuffer += e.key;
+              if (isFastTyping && rfidBuffer.length > 3) {
+                e.preventDefault();
+              }
+            }
+          }
+
+          // Clear buffer if typing slows down
+          clearTimeout(rfidTimeout);
+          rfidTimeout = setTimeout(() => {
+            rfidBuffer = '';
+          }, 200);
+        }
+      });
+    }
+
+    // Initialize RFID detection
+    detectRFID();
+
+    function showStatus(message, type) {
+      const statusDiv = document.getElementById('status');
+      statusDiv.innerHTML = message;
+      statusDiv.className = type;
+      statusDiv.style.display = 'block';
+      
+      // Auto-hide success messages after 5 seconds
+      if (type === 'success') {
+        setTimeout(() => {
+          statusDiv.style.display = 'none';
+        }, 5000);
+      }
+    }
+
+    function addCard() {
+      const rfidId = rfidInput.value.trim();
+      const queueNum = queueInput.value.trim();
+
+      // Validation
+      if (!rfidId) {
+        showStatus('❌ Please enter or scan an RFID card ID', 'error');
+        rfidInput.focus();
+        return;
+      }
+
+      if (!/^\d+$/.test(rfidId)) {
+        showStatus('❌ RFID ID must contain only numbers', 'error');
+        rfidInput.focus();
+        return;
+      }
+
+      if (!queueNum || parseInt(queueNum) < 1) {
+        showStatus('❌ Please enter a valid queue number (1 or higher)', 'error');
+        queueInput.focus();
+        return;
+      }
+
+      // Check for duplicates
+      if (cardsToUpload.some(card => card.rfidId === rfidId)) {
+        showStatus(`⚠️ RFID card ${rfidId} is already in the list`, 'warning');
+        rfidInput.focus();
+        return;
+      }
+
+      // Add to list
+      const card = {
+        rfidId: rfidId,
+        queueNumber: parseInt(queueNum),
+        createdAt: Date.now(),
+        lastUpdated: Date.now()
+      };
+
+      cardsToUpload.push(card);
+      updateCardsList();
+      clearForm();
+      showStatus(`✅ Added: RFID ${rfidId} → Queue #${queueNum}`, 'success');
+    }
+
+    function removeCard(rfidId) {
+      cardsToUpload = cardsToUpload.filter(card => card.rfidId !== rfidId);
+      updateCardsList();
+      showStatus(`🗑️ Removed RFID card ${rfidId}`, 'info');
+    }
+
+    function clearForm() {
+      rfidInput.value = '';
+      queueInput.value = '';
+      rfidInput.focus();
+      rfidBuffer = '';
+    }
+
+    function clearAllCards() {
+      if (cardsToUpload.length === 0) return;
+      
+      if (confirm(`Are you sure you want to remove all ${cardsToUpload.length} cards from the list?`)) {
+        cardsToUpload = [];
+        updateCardsList();
+        showStatus('🗑️ All cards cleared', 'info');
+      }
+    }
+
+    function updateCardsList() {
+      // Update count
+      cardCount.textContent = cardsToUpload.length;
+
+      // Show/hide list
+      if (cardsToUpload.length > 0) {
+        cardsList.style.display = 'block';
+        uploadBtn.disabled = false;
+      } else {
+        cardsList.style.display = 'none';
+        uploadBtn.disabled = true;
+      }
+
+      // Render cards
+      cardsContainer.innerHTML = '';
+      if (cardsToUpload.length === 0) {
+        cardsContainer.innerHTML = '<div class="empty-state">No cards added yet. Add your first card above.</div>';
+        return;
+      }
+
+      // Sort by queue number
+      const sortedCards = [...cardsToUpload].sort((a, b) => a.queueNumber - b.queueNumber);
+
+      sortedCards.forEach(card => {
+        const cardDiv = document.createElement('div');
+        cardDiv.className = 'card-item';
+        cardDiv.innerHTML = `
+          <div class="card-info">
+            <div class="card-id">RFID: ${card.rfidId}</div>
+            <div class="card-queue">Queue Number: ${card.queueNumber}</div>
+          </div>
+          <div class="card-actions">
+            <button class="btn-danger btn-small" onclick="removeCard('${card.rfidId}')">Remove</button>
+          </div>
+        `;
+        cardsContainer.appendChild(cardDiv);
+      });
+    }
+
+    // Make functions globally available
+    window.addCard = addCard;
+    window.removeCard = removeCard;
+    window.clearForm = clearForm;
+    window.clearAllCards = clearAllCards;
+
+    window.uploadAllCards = async function() {
+      if (cardsToUpload.length === 0) {
+        showStatus('❌ No cards to upload. Please add cards first.', 'error');
+        return;
+      }
+
+      const button = uploadBtn;
+      button.disabled = true;
+      button.textContent = '⏳ Uploading...';
+      
+      showStatus(`⏳ Starting upload of ${cardsToUpload.length} cards...`, 'info');
+
+      try {
+        let count = 0;
+        for (const card of cardsToUpload) {
+          await set(ref(database, `rfid_cards/${card.rfidId}`), {
+            queueNumber: card.queueNumber,
+            rfidId: card.rfidId,
+            createdAt: card.createdAt,
+            lastUpdated: card.lastUpdated
+          });
+          
+          count++;
+          showStatus(`⏳ Uploading... ${count}/${cardsToUpload.length} cards uploaded`, 'info');
+          console.log(`✅ Uploaded: RFID ${card.rfidId} → Queue #${card.queueNumber}`);
+        }
+
+        showStatus(
+          `🎉 SUCCESS! All ${cardsToUpload.length} RFID cards uploaded to Firebase!<br><br>` +
+          `✅ You can now:<br>` +
+          `1. Test by tapping an RFID card at the user station<br>` +
+          `2. Verify the data in Firebase Console<br>` +
+          `3. Close this page and delete upload-rfid.html if desired`,
+          'success'
+        );
+        
+        button.textContent = '✅ Upload Complete!';
+        button.style.background = '#28a745';
+        console.log('All RFID cards uploaded successfully!');
+        
+        // Clear the list after successful upload
+        cardsToUpload = [];
+        updateCardsList();
+        
+      } catch (error) {
+        showStatus(
+          '❌ ERROR: ' + error.message + '<br><br>' +
+          'Please check:<br>' +
+          '1. Internet connection<br>' +
+          '2. Firebase configuration in scripts/firebase-config.js<br>' +
+          '3. Browser console (F12) for details<br>' +
+          '4. Security rules allow write access to rfid_cards',
+          'error'
+        );
+        button.disabled = false;
+        button.textContent = '📤 Upload All Cards to Firebase';
+        console.error('Upload error:', error);
+      }
+    };
+
+    // Allow Enter key to add card
+    rfidInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && rfidInput.value.trim()) {
+        e.preventDefault();
+        queueInput.focus();
+      }
+    });
+
+    queueInput.addEventListener('keypress', function(e) {
+      if (e.key === 'Enter' && rfidInput.value.trim() && queueInput.value.trim()) {
+        e.preventDefault();
+        addCard();
+      }
+    });
+  </script>
+</body>
+</html>

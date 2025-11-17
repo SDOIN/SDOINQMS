@@ -16,12 +16,23 @@ window.initializeFirebaseAdmin = function(stationType) {
   // Show skeleton loading initially
   showSkeletonLoading();
 
+  // Debounce ensureInitialNext to prevent excessive calls
+  let ensureNextTimeout = null;
+  
   const safeRender = () => {
     if (!hasLoadedData) {
       hasLoadedData = true;
     }
     renderQueueList(latestQueue, stationType, latestState);
-    ensureInitialNext(stationType, latestQueue, latestState);
+    
+    // Debounce ensureInitialNext to prevent race conditions
+    // Only call it after a short delay to ensure state is stable
+    if (ensureNextTimeout) {
+      clearTimeout(ensureNextTimeout);
+    }
+    ensureNextTimeout = setTimeout(() => {
+      ensureInitialNext(stationType, latestQueue, latestState);
+    }, 300); // Wait 300ms for state to stabilize
   };
 
   // Real-time listener for queue updates
@@ -79,25 +90,119 @@ window.adminCallNext = async function(stationType) {
     return;
   }
 
-  // Promote next to serving
-  await set(ref(database, `${stationType}_state/serving`), nextKey);
-
-  // Choose new next from oldest waiting excluding the one now serving
+  // Choose new next from oldest waiting excluding the one that will be serving
+  // CRITICAL: Make sure newNext is NOT the same as nextKey (the one being promoted)
   const newNext = waiting.find(p => p.firebaseKey !== nextKey) || null;
-  await set(ref(database, `${stationType}_state/next`), newNext ? newNext.firebaseKey : null);
+  
+  // Double-check: Ensure newNext is not the same as nextKey (should never happen, but safety check)
+  if (newNext && newNext.firebaseKey === nextKey) {
+    console.error('❌ CRITICAL: newNext is the same as nextKey! This should never happen.');
+    return;
+  }
+  
+  // Use lock to prevent concurrent state updates
+  if (isUpdatingState) {
+    console.warn('⚠️ State update already in progress, skipping...');
+    return;
+  }
+  
+  isUpdatingState = true;
+  try {
+    // Use atomic update to set both serving and next at the same time
+    // CRITICAL: Ensure next is NEVER the same as serving
+    const updates = {
+      serving: nextKey,
+      next: (newNext && newNext.firebaseKey !== nextKey) ? newNext.firebaseKey : null
+    };
+    
+    // Final safety check: serving and next should NEVER be the same
+    if (updates.serving && updates.next && updates.serving === updates.next) {
+      console.error('❌ CRITICAL ERROR: Attempted to set serving and next to the same key!', updates);
+      updates.next = null; // Force next to null if they're the same
+    }
+    
+    await update(stateRef, updates);
+    console.log('✅ State updated atomically:', updates);
+    
+    // Verify the update was successful
+    const verifyState = await new Promise(resolve => onValue(stateRef, (snap) => {
+      resolve(snap.exists() ? snap.val() : {});
+    }, { onlyOnce: true }));
+    
+    // If verification shows they're still the same, force fix it
+    const verifyServing = verifyState.serving?.firebaseKey || verifyState.serving || null;
+    const verifyNext = verifyState.next?.firebaseKey || verifyState.next || null;
+    
+    if (verifyServing && verifyNext && verifyServing === verifyNext) {
+      console.error('❌ CRITICAL: After update, serving and next are still the same! Fixing...');
+      await update(stateRef, { next: null });
+      console.log('✅ Forced next to null to prevent duplication');
+    }
+  } catch (error) {
+    console.error('❌ Error updating state:', error);
+    throw error;
+  } finally {
+    isUpdatingState = false;
+  }
 };
 
 // Ensure initial NEXT is populated when empty and queue has items
 let isSettingNext = false;
+let isUpdatingState = false; // Lock to prevent concurrent state updates
 
 async function ensureInitialNext(stationType, queueArray, controlState = {}) {
   // Prevent concurrent calls
-  if (isSettingNext) return;
+  if (isSettingNext || isUpdatingState) return;
   
-  const hasNext = !!(controlState.next);
+  // Extract keys properly (handle both object and string formats)
+  const servingKey = controlState.serving?.firebaseKey || controlState.serving || null;
+  const nextKey = controlState.next?.firebaseKey || controlState.next || null;
   
-  // If there's already a next queue, we're good
-  if (hasNext) return;
+  // CRITICAL: If next and serving are the same, clear next immediately
+  if (servingKey && nextKey && servingKey === nextKey) {
+    console.error('❌ CRITICAL: next and serving are the same! Clearing next...');
+    isSettingNext = true;
+    try {
+      await set(ref(database, `${stationType}_state/next`), null);
+      console.log('✅ Cleared duplicate next value');
+    } catch (error) {
+      console.error('❌ Error clearing duplicate next:', error);
+    } finally {
+      isSettingNext = false;
+    }
+    return; // Don't set a new next if we just cleared a duplicate
+  }
+  
+  // CRITICAL: If there's already a valid next queue, preserve it - do nothing
+  // This prevents clearing next when page refreshes
+  if (nextKey) {
+    // Verify the next key actually exists in the queue
+    const nextExists = queueArray.some(q => q.firebaseKey === nextKey);
+    if (nextExists) {
+      // Next is valid and exists - preserve it, don't touch anything
+      return;
+    } else {
+      // Next key doesn't exist in queue anymore - clear it
+      console.warn('⚠️ Next key does not exist in queue, clearing...');
+      isSettingNext = true;
+      try {
+        await set(ref(database, `${stationType}_state/next`), null);
+      } catch (error) {
+        console.error('❌ Error clearing invalid next:', error);
+      } finally {
+        isSettingNext = false;
+      }
+      return;
+    }
+  }
+  
+  // If there's already a serving queue but no next, don't auto-assign next
+  // (admin should manually call next customer to promote from waiting)
+  if (servingKey) {
+    // Don't auto-assign next when there's already a serving item
+    // The admin needs to manually call next customer
+    return;
+  }
   
   const waiting = queueArray
     .filter(i => (i.status || 'waiting') === 'waiting')
@@ -107,16 +212,34 @@ async function ensureInitialNext(stationType, queueArray, controlState = {}) {
   if (waiting.length === 0) return;
   
   // Find first queue that's not currently serving
-  const servingKey = controlState.serving;
   const first = waiting.find(q => q.firebaseKey !== servingKey);
   
   if (!first) return;
+  
+  // CRITICAL: Double-check that first is not the same as serving
+  if (first.firebaseKey === servingKey) {
+    console.error('❌ CRITICAL: Attempted to set next to the same key as serving!');
+    return;
+  }
   
   isSettingNext = true;
   try {
     console.log(`🔄 Auto-assigning NEXT queue: ${first.number} (${first.firebaseKey})`);
     await set(ref(database, `${stationType}_state/next`), first.firebaseKey);
     console.log(`✅ Successfully set NEXT queue to: ${first.number}`);
+    
+    // Verify the update
+    const verifyState = await new Promise(resolve => onValue(ref(database, `${stationType}_state`), (snap) => {
+      resolve(snap.exists() ? snap.val() : {});
+    }, { onlyOnce: true }));
+    
+    const verifyServing = verifyState.serving?.firebaseKey || verifyState.serving || null;
+    const verifyNext = verifyState.next?.firebaseKey || verifyState.next || null;
+    
+    if (verifyServing && verifyNext && verifyServing === verifyNext) {
+      console.error('❌ CRITICAL: After setting next, it matches serving! Clearing...');
+      await set(ref(database, `${stationType}_state/next`), null);
+    }
   } catch (error) {
     console.error('❌ Error setting initial next:', error);
   } finally {
@@ -224,8 +347,24 @@ function renderQueueList(queueArray, stationType, controlState = {}) {
   if (!queueList) return;
   
   queueList.innerHTML = '';
-  const stateServingKey = controlState.serving?.firebaseKey || controlState.serving || null;
-  const stateNextKey = controlState.next?.firebaseKey || controlState.next || null;
+  let stateServingKey = controlState.serving?.firebaseKey || controlState.serving || null;
+  let stateNextKey = controlState.next?.firebaseKey || controlState.next || null;
+
+  // CRITICAL: If serving and next are the same, clear next to prevent duplication
+  if (stateServingKey && stateNextKey && stateServingKey === stateNextKey) {
+    console.error('❌ CRITICAL: serving and next are the same in render! Clearing next...');
+    // Clear next asynchronously to prevent blocking render
+    setTimeout(async () => {
+      try {
+        await set(ref(database, `${stationType}_state/next`), null);
+        console.log('✅ Cleared duplicate next value in render');
+      } catch (error) {
+        console.error('❌ Error clearing duplicate next in render:', error);
+      }
+    }, 100);
+    // Force next to null to prevent showing duplicate
+    stateNextKey = null;
+  }
 
   // Filter and sort waiting items by creation time (FIFO)
   const waiting = queueArray
@@ -468,16 +607,35 @@ window.confirmMarkDone = async function() {
         .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     }
     
-    // Clear serving but KEEP next queue as is
-    // Do NOT automatically promote next to serving
-    await set(ref(database, `${window.currentStationType}_state/serving`), null);
+    // Extract keys properly (handle both object and string formats)
+    const currentServingKey = currentState.serving?.firebaseKey || currentState.serving || null;
+    const currentNextKey = currentState.next?.firebaseKey || currentState.next || null;
+    
+    // Prepare atomic update
+    const stateUpdates = {};
+    
+    // Clear serving
+    stateUpdates.serving = null;
     
     // If next was the one we just removed, get a new next from waiting
-    if (currentState.next === completedKey) {
-      const newNext = waiting.length > 0 ? waiting[0].firebaseKey : null;
-      await set(ref(database, `${window.currentStationType}_state/next`), newNext);
+    if (currentNextKey === completedKey) {
+      stateUpdates.next = waiting.length > 0 ? waiting[0].firebaseKey : null;
     }
-    // Otherwise, keep the existing next queue unchanged
+    // Otherwise, keep the existing next queue unchanged (don't include in update)
+    
+    // Use atomic update to prevent race conditions
+    if (isUpdatingState) {
+      console.warn('⚠️ State update already in progress, retrying...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+    }
+    
+    isUpdatingState = true;
+    try {
+      await update(stateRef, stateUpdates);
+      console.log('✅ State updated atomically after marking done:', stateUpdates);
+    } finally {
+      isUpdatingState = false;
+    }
     
     closeModal('doneModal');
     closeModal('viewModal');
@@ -502,8 +660,12 @@ window.confirmCancelQueue = async function() {
     const stateSnapshot = await new Promise(resolve => onValue(stateRef, resolve, { onlyOnce: true }));
     const currentState = stateSnapshot.exists() ? stateSnapshot.val() : {};
     
-    const wasServing = currentState.serving === cancelledKey;
-    const wasNext = currentState.next === cancelledKey;
+    // Extract keys properly (handle both object and string formats)
+    const currentServingKey = currentState.serving?.firebaseKey || currentState.serving || null;
+    const currentNextKey = currentState.next?.firebaseKey || currentState.next || null;
+    
+    const wasServing = currentServingKey === cancelledKey;
+    const wasNext = currentNextKey === cancelledKey;
     
     // Remove the queue item
     await remove(queueItemRef);
@@ -520,29 +682,46 @@ window.confirmCancelQueue = async function() {
         .sort((a, b) => (a.createdAt || 0) - (b.createdAt || 0));
     }
     
+    // Prepare atomic update
+    const stateUpdates = {};
+    
     // Update state based on what was cancelled
     if (wasServing) {
       // Cancelled the serving queue (ON QUEUE)
       // Clear serving but KEEP next queue in place
-      // Do NOT automatically promote next to serving
-      await set(ref(database, `${window.currentStationType}_state/serving`), null);
-      // Next queue stays in next position - no changes needed
+      stateUpdates.serving = null;
       console.log('✅ Cancelled ON QUEUE. Next queue remains in position.');
     } else if (wasNext) {
       // Cancelled the next queue - get new next from waiting
-      const newNext = waiting.find(q => q.firebaseKey !== currentState.serving);
-      await set(ref(database, `${window.currentStationType}_state/next`), newNext ? newNext.firebaseKey : null);
+      const newNext = waiting.find(q => q.firebaseKey !== currentServingKey);
+      stateUpdates.next = newNext ? newNext.firebaseKey : null;
       console.log('✅ Cancelled NEXT QUEUE. New next assigned from waiting list.');
     } else {
       // Cancelled a regular waiting queue
       // Check if we need to assign next (if it was empty)
-      if (!currentState.next && waiting.length > 0) {
-        const newNext = waiting.find(q => q.firebaseKey !== currentState.serving);
+      if (!currentNextKey && waiting.length > 0) {
+        const newNext = waiting.find(q => q.firebaseKey !== currentServingKey);
         if (newNext) {
-          await set(ref(database, `${window.currentStationType}_state/next`), newNext.firebaseKey);
+          stateUpdates.next = newNext.firebaseKey;
         }
       }
       console.log('✅ Cancelled waiting queue.');
+    }
+    
+    // Use atomic update to prevent race conditions
+    if (Object.keys(stateUpdates).length > 0) {
+      if (isUpdatingState) {
+        console.warn('⚠️ State update already in progress, retrying...');
+        await new Promise(resolve => setTimeout(resolve, 100));
+      }
+      
+      isUpdatingState = true;
+      try {
+        await update(stateRef, stateUpdates);
+        console.log('✅ State updated atomically after cancelling:', stateUpdates);
+      } finally {
+        isUpdatingState = false;
+      }
     }
     
     closeModal('cancelModal');
