@@ -194,19 +194,20 @@ window.submitQueue = async function(event) {
       createdAt: Date.now()
     });
     
-    // Auto-set as "next" if no serving and no next queue exists
+    // Auto-set as "next" if there is no current next queue
     const stateRef = ref(database, 'receiving_state');
     const stateSnapshot = await new Promise((resolve) => {
       onValue(stateRef, resolve, { onlyOnce: true });
     });
     
     const currentState = stateSnapshot.exists() ? stateSnapshot.val() : {};
+    const currentNextKey = currentState.next?.firebaseKey || currentState.next || null;
     
     console.log('📝 Current State:', currentState);
     console.log('🆕 New Queue Key:', newQueueRef.key);
     
-    // If both serving and next are empty, set this as next
-    if (!currentState.serving && !currentState.next) {
+    // If there is no NEXT queue (or the stored key no longer exists), set this as next
+    if (!currentNextKey) {
       await set(ref(database, 'receiving_state/next'), newQueueRef.key);
       console.log('✅ Auto-assigned Queue #' + queueNumber + ' as NEXT QUEUE (Key: ' + newQueueRef.key + ')');
     } else {
