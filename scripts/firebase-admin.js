@@ -66,8 +66,18 @@ window.adminCallNext = async function(stationType) {
   let currentState = {};
   await new Promise(resolve => onValue(stateRef, (snap) => { currentState = snap.val() || {}; resolve(); }, { onlyOnce: true }));
 
+  // Safety check: Do not proceed if there's already an ON QUEUE item
+  const hasOnQueue = !!(currentState.serving?.firebaseKey || currentState.serving);
+  if (hasOnQueue) {
+    console.warn('⚠️ Cannot call next customer: There is already an item in ON QUEUE');
+    return;
+  }
+
   const nextKey = currentState.next?.firebaseKey || currentState.next || null;
-  if (!nextKey) return;
+  if (!nextKey) {
+    console.warn('⚠️ Cannot call next customer: No next queue available');
+    return;
+  }
 
   // Promote next to serving
   await set(ref(database, `${stationType}_state/serving`), nextKey);
@@ -257,10 +267,18 @@ function renderQueueList(queueArray, stationType, controlState = {}) {
   queueList.appendChild(control);
   const callNextBtn = control.querySelector('#callNextBtn');
   if (callNextBtn) {
-    // Button should be enabled if there's a next key, regardless of whether we found the item
-    const shouldEnable = !!stateNextKey && waiting.length > 0;
+    // Button should be enabled ONLY when:
+    // 1. There's NO item in ON QUEUE (serving is null/empty)
+    // 2. AND there's a next queue available
+    // 3. AND there are waiting items
+    const hasOnQueue = !!stateServingKey;
+    const shouldEnable = !hasOnQueue && !!stateNextKey && waiting.length > 0;
     callNextBtn.disabled = !shouldEnable;
-    console.log('🔘 Call Next Button:', shouldEnable ? 'ENABLED' : 'DISABLED', { hasNextKey: !!stateNextKey, waitingCount: waiting.length });
+    console.log('🔘 Call Next Button:', shouldEnable ? 'ENABLED' : 'DISABLED', { 
+      hasOnQueue, 
+      hasNextKey: !!stateNextKey, 
+      waitingCount: waiting.length 
+    });
     callNextBtn.addEventListener('click', () => window.adminCallNext && window.adminCallNext(stationType));
   }
 
@@ -341,7 +359,22 @@ function renderQueueList(queueArray, stationType, controlState = {}) {
   });
   
   if (waiting.length === 0) {
-    queueList.innerHTML = '<div style="text-align:center; color:#999; padding:40px;">No waiting queues</div>';
+    queueList.innerHTML = `
+      <div class="empty-queue-state">
+        <div class="empty-queue-icon">
+          <svg width="56" height="56" viewBox="0 0 64 64" fill="none" stroke="currentColor" stroke-width="2.5">
+            <rect x="8" y="18" width="48" height="30" rx="6" />
+            <path d="M16 18v-4c0-2.2 1.8-4 4-4h24c2.2 0 4 1.8 4 4v4" />
+            <path d="M22 50c0 3.3-2.7 6-6 6" />
+            <path d="M42 50c0 3.3 2.7 6 6 6" />
+            <path d="M24 30h16" />
+            <path d="M24 38h10" />
+          </svg>
+        </div>
+        <div class="empty-queue-title">No waiting queues</div>
+        <p class="empty-queue-message">You're all caught up. New queues will appear here automatically.</p>
+      </div>
+    `;
   }
 }
 

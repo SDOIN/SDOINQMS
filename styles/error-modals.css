@@ -1,0 +1,109 @@
+/* ========================================
+   Custom Error Modal Styles
+   ======================================== */
+
+/* Standardized slideDown animation */
+@keyframes slideDown {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+/* Custom Error Modal */
+.custom-error-modal {
+  position: fixed;
+  top: 80px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: none;
+  z-index: 12000;
+  animation: slideDown 0.3s ease;
+}
+
+.custom-error-content {
+  background: #fff;
+  border: 2px solid #f44336;
+  border-radius: 14px;
+  padding: 22px 28px;
+  box-shadow: 0 20px 60px rgba(244, 67, 54, 0.25);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 14px;
+  min-width: 420px;
+  max-width: 540px;
+  position: relative;
+}
+
+.custom-error-icon {
+  font-size: 42px;
+  line-height: 1;
+}
+
+.custom-error-text {
+  text-align: center;
+}
+
+.custom-error-text strong {
+  display: block;
+  color: #d32f2f;
+  font-size: 20px;
+  margin-bottom: 6px;
+}
+
+.custom-error-text p {
+  margin: 0;
+  color: #444;
+  font-size: 15px;
+}
+
+.custom-error-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: none;
+  border: none;
+  color: #999;
+  font-size: 22px;
+  cursor: pointer;
+  padding: 0;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  transition: all 0.2s;
+}
+
+.custom-error-close:hover {
+  background: rgba(0, 0, 0, 0.05);
+  color: #666;
+}
+
+/* Responsive Design */
+@media (max-width: 768px) {
+  .custom-error-content {
+    min-width: 300px;
+    max-width: 90vw;
+    padding: 15px 20px;
+  }
+
+  .custom-error-icon {
+    font-size: 32px;
+  }
+
+  .custom-error-text strong {
+    font-size: 16px;
+  }
+
+  .custom-error-text p {
+    font-size: 14px;
+  }
+}
+

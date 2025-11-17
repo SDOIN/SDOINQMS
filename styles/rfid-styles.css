@@ -1,0 +1,27 @@
+/* ========================================
+   RFID Success Animation Styles
+   ======================================== */
+
+/* RFID Success Animation */
+@keyframes rfidSuccess {
+  0% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0.7);
+  }
+  50% { 
+    transform: scale(1.02);
+    box-shadow: 0 0 0 10px rgba(76, 175, 80, 0);
+  }
+  100% { 
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(76, 175, 80, 0);
+  }
+}
+
+input.rfid-success {
+  animation: rfidSuccess 0.6s ease;
+  background: #e8f5e9 !important;
+  border-color: #4caf50 !important;
+  transition: all 0.3s ease;
+}
+

@@ -5,17 +5,12 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>SDOIN QMS - Dashboard</title>
   <link rel="icon" type="image/png" href="images/SDOINLogo.png" />
-  <link rel="stylesheet" href="styles.css" />
-  <script defer src="script.js"></script>
+  <link rel="stylesheet" href="styles/styles.css" />
+  <link rel="stylesheet" href="styles/error-modals.css" />
   <style>
     html, body {
       margin: 0 !important;
       padding: 0 !important;
-    }
-    * {
-      margin: 0;
-      padding: 0;
-      box-sizing: border-box;
     }
 
     body {
@@ -310,13 +305,13 @@
     }
 
     .nav-btn {
-      background: linear-gradient(135deg, #28a745, #20c997);
-      color: white;
+      background: linear-gradient(135deg, #218838, #1a9d7a);
+      color: #ffffff;
       border: none;
       padding: 15px 25px;
       border-radius: 10px;
       font-size: 16px;
-      font-weight: bold;
+      font-weight: 550;
       text-transform: uppercase;
       letter-spacing: 1px;
       cursor: pointer;
@@ -326,32 +321,32 @@
       display: block;
       width: 100%;
       text-align: center;
+      text-shadow: 0 2px 6px rgba(0, 0, 0, 0.7), 0 1px 3px rgba(0, 0, 0, 0.9);
     }
 
     .nav-btn:hover {
-      background: linear-gradient(135deg, #218838, #1ea480);
+      background: linear-gradient(135deg, #1e7e34, #178066);
       transform: translateY(-3px);
       box-shadow: 0 8px 25px rgba(40, 167, 69, 0.4);
     }
 
     .nav-btn.secondary {
-      background: linear-gradient(135deg, #007bff, #0056b3);
+      background: linear-gradient(135deg, #0056b3, #004494);
       box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3);
     }
 
     .nav-btn.secondary:hover {
-      background: linear-gradient(135deg, #0056b3, #004494);
+      background: linear-gradient(135deg, #004a99, #003d7a);
       box-shadow: 0 8px 25px rgba(0, 123, 255, 0.4);
     }
 
     .nav-btn.tertiary {
-      background: linear-gradient(135deg, #ffc107, #e0a800);
-      color: #333;
+      background: linear-gradient(135deg, #e0a800, #cc9900);
       box-shadow: 0 4px 15px rgba(255, 193, 7, 0.3);
     }
 
     .nav-btn.tertiary:hover {
-      background: linear-gradient(135deg, #e0a800, #d39e00);
+      background: linear-gradient(135deg, #cc9900, #b38600);
       transform: translateY(-3px);
       box-shadow: 0 8px 25px rgba(255, 193, 7, 0.4);
     }
@@ -514,7 +509,7 @@
   <div id="adminLoginOverlay" style="display:none; position:fixed; inset:0; background:rgba(0,0,0,0.6); backdrop-filter: blur(2px); z-index:9999; align-items:center; justify-content:center;">
     <div style="background:#ffffff; color:#222; width:90%; max-width:420px; border-radius:12px; box-shadow:0 12px 32px rgba(0,0,0,0.35); overflow:hidden;">
       <div style="background:#2c2c2c; color:#fff; padding:14px 18px; font-weight:bold; display:flex; align-items:center; justify-content:space-between;">
-        <span id="adminModalTitle">Administrator Login</span>
+        <span id="adminModalTitle">Login</span>
         <button id="closeAdminLogin" style="background:transparent; border:none; color:#fff; font-size:22px; cursor:pointer;">×</button>
       </div>
       <div style="padding:22px 20px;">
@@ -544,13 +539,13 @@
     <div class="footer-desktop">
       <div class="footer-left">Made with ❤️ and ☕</div>
       <div class="footer-right">
-        <div>Copyright © 2025 SDOIN</div>
+        <div>Copyright © 2025 <a href="https://depedilocosnorte.com/" target="_blank" style="color: rgba(255, 255, 255, 0.95); text-decoration: underline;">SDOIN</a></div>
         <div>Developed By: P.K. Tagalicud, J.M. Queddeng, C.J. Baay, and <a href="https://www.facebook.com/https.jastrel.me/" target="_blank" style="color: rgba(255, 255, 255, 0.95); text-decoration: underline;">J. Acebu</a></div>
       </div>
     </div>
     <div class="footer-mobile">
       <div>Made with ❤️ and ☕</div>
-      <div>Copyright © 2025 SDOIN</div>
+      <div>Copyright © 2025 <a href="https://depedilocosnorte.com/" target="_blank" style="color: rgba(255, 255, 255, 0.95); text-decoration: underline;">SDOIN</a></div>
       <div>Developed By: P.K. Tagalicud, J.M. Queddeng,</div>
       <div>C.J. Baay, and <a href="https://www.facebook.com/https.jastrel.me/" target="_blank" style="color: rgba(255, 255, 255, 0.95); text-decoration: underline;">J. Acebu</a></div>
     </div>
@@ -576,6 +571,36 @@
       const timeString = `${hours}:${minutes}:${seconds} ${ampm}`;
 
       document.getElementById('datetime').textContent = `${dateString} | ${timeString}`;
+    }
+
+    // Shared custom error modal (matches RFID error style)
+    function showCustomError(title, message) {
+      const existingError = document.getElementById('customError');
+      if (existingError) {
+        existingError.remove();
+      }
+
+      const errorDiv = document.createElement('div');
+      errorDiv.id = 'customError';
+      errorDiv.className = 'custom-error-modal';
+      errorDiv.innerHTML = `
+        <div class="custom-error-content">
+          <span class="custom-error-icon">⚠️</span>
+          <div class="custom-error-text">
+            <strong>${title}</strong>
+            <p>${message}</p>
+          </div>
+          <button class="custom-error-close" onclick="this.parentElement.parentElement.remove()">✕</button>
+        </div>
+      `;
+
+      document.body.appendChild(errorDiv);
+
+      setTimeout(() => {
+        if (errorDiv.parentElement) {
+          errorDiv.remove();
+        }
+      }, 6000);
     }
 
     const STORED_CREDENTIALS = {
@@ -691,16 +716,24 @@
       }, 2500);
     }
 
+    const SPLASH_STORAGE_KEY = 'qmsSplashShown';
+
     // Initialize and update time every second
     document.addEventListener('DOMContentLoaded', function() {
-      // Show splash screen first
-      showSplashScreen();
-      
-      // Initialize system after splash
-      setTimeout(() => {
+      const startRealtimeClock = () => {
         updateDateTime();
         setInterval(updateDateTime, 1000);
-      }, 500);
+      };
+
+      const hasSeenSplash = sessionStorage.getItem(SPLASH_STORAGE_KEY) === 'true';
+
+      if (!hasSeenSplash) {
+        showSplashScreen();
+        sessionStorage.setItem(SPLASH_STORAGE_KEY, 'true');
+        setTimeout(startRealtimeClock, 500);
+      } else {
+        startRealtimeClock();
+      }
 
       // Fullscreen loading functions
       function showFullscreenLoading(message = 'Loading...') {
@@ -765,7 +798,7 @@
         const password = document.getElementById('adminPassword').value;
         
         if (!username || !password) {
-          alert('Please enter both username and password.');
+          showCustomError('Missing Credentials', 'Please enter both username and password.');
           return;
         }
 
@@ -792,12 +825,12 @@
           } else {
             console.log('Invalid credentials');
             hideFullscreenLoading();
-            alert('Invalid username or password.');
+            showCustomError('Login Failed', 'Invalid username or password. Please try again.');
           }
         } catch (error) {
           hideFullscreenLoading();
           console.error('Login error:', error);
-          alert('Login failed. Please try again.');
+          showCustomError('Login Error', 'Something went wrong while signing in. Please try again.');
         }
       });
 
