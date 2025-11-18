@@ -298,7 +298,7 @@ function showSplashScreen() {
         <img src="images/DEPEDLogo.png" alt="DEPED Logo" class="splash-logo">
       </div>
       <div class="splash-title">SDOIN Queuing Management System</div>
-      <div class="splash-subtitle">Schools Division Office of Iloilo Norte</div>
+      <div class="splash-subtitle">Schools Division Office of Ilocos Norte</div>
       <div class="splash-spinner">
         <div class="circular-spinner">
           <div class="spinner-dot"></div>
